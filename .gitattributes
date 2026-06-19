@@ -1,0 +1,2 @@
+cadebot-lora/**/*.safetensors filter=lfs diff=lfs merge=lfs -text
+cadebot-lora/**/*.pt filter=lfs diff=lfs merge=lfs -text
