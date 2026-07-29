@@ -27,6 +27,21 @@ def _doc_slug(path: Path) -> str:
     return path.stem
 
 
+_HR_LINE = {"---", "***", "___"}
+
+
+def _strip_rules(text: str) -> str:
+    """Bỏ đường kẻ ngang markdown khỏi nội dung chunk.
+
+    Chúng không mang thông tin gì cho retrieval, và nếu lọt vào chunk thì khi
+    nối bằng CHUNK_SEPARATOR (`\\n---\\n`) sẽ tạo ra `---\\n---\\n`: Dify cắt
+    lệch một nhịp và segment kế tiếp mở đầu bằng `---` thay vì `[chunk_id]`,
+    làm parse_chunk_id trả 'unknown' và mất sourceIds.
+    """
+    kept = [ln for ln in text.splitlines() if ln.strip() not in _HR_LINE]
+    return "\n".join(kept).strip()
+
+
 def chunk_faq_file(path: Path) -> list[Chunk]:
     raw = path.read_text(encoding="utf-8")
     # Bắt từng cặp Q:/A: — A: chạy tới khi gặp Q: kế tiếp hoặc hết file.
@@ -74,7 +89,7 @@ def chunk_markdown_file(path: Path) -> list[Chunk]:
         if len(subs) == 1:
             # Gắn tiêu đề file vào đầu chunk — nếu không, chunk "## 2. Tiện Ích"
             # bị lấy ra một mình sẽ không biết là tiện ích của quán nào.
-            text = f"{title}\n\n## {body}"
+            text = _strip_rules(f"{title}\n\n## {body}")
             chunks.append(Chunk(id=f"doc:{slug}#{i}", text=text, source=path.name))
             continue
 
@@ -83,7 +98,7 @@ def chunk_markdown_file(path: Path) -> list[Chunk]:
             if not sub_body:
                 continue
             # Chunk con mang cả tên file lẫn tên section cha để tự đứng vững.
-            text = f"{title}\n\n## {section_title}\n\n### {sub_body}"
+            text = _strip_rules(f"{title}\n\n## {section_title}\n\n### {sub_body}")
             chunks.append(
                 Chunk(id=f"doc:{slug}#{i}.{j}", text=text, source=path.name)
             )

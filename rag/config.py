@@ -40,4 +40,9 @@ MARKDOWN_FILES = [
 KB_DOC_NAME_MARKDOWN = "cadebot_kb_markdown.md"
 KB_DOC_NAME_DB = "cadebot_kb_database.md"
 CHUNK_SEPARATOR = "\n---\n"
-CHUNK_MAX_TOKENS = 500
+# Ta đã tự chẻ chunk ở rag/chunker.py, nên đây chỉ là lưới an toàn — phải đặt
+# CAO HƠN HẲN chunk lớn nhất (694 ký tự). Để 500 thì Dify cắt đôi các chunk
+# markdown tiếng Việt (dấu tokenize rất tốn) và đoạn sau mất dòng [chunk_id]
+# -> parse_chunk_id trả 'unknown' -> hỏng sourceIds. Đã đo: 500 làm 34 chunk
+# markdown nở thành 46 segment, 13 segment mất id.
+CHUNK_MAX_TOKENS = 2000

@@ -78,3 +78,14 @@ def test_subsection_chunks_keep_parent_section_context():
     chunks = chunk_markdown_file(config.KB_DIR / "02_Menu_Va_Phuong_Phap_Pha_Che.md")
     coffee = next(c for c in chunks if "Cà Phê (Coffee)" in c.text)
     assert "VIVA RESERVE" in coffee.text.upper(), "chunk con vẫn phải mang tên quán"
+
+
+def test_no_chunk_contains_standalone_horizontal_rule():
+    """File markdown nguồn có đường kẻ `---`. Lọt vào chunk thì khi nối bằng
+    separator `\\n---\\n` sẽ thành `---\\n---\\n`, Dify cắt lệch và segment sau
+    mở đầu bằng `---` thay vì `[chunk_id]` -> mất provenance."""
+    offenders = [
+        c.id for c in chunk_all_markdown()
+        if any(line.strip() in ("---", "***", "___") for line in c.text.splitlines())
+    ]
+    assert not offenders, f"chunk còn đường kẻ ngang: {offenders}"
