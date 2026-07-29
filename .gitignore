@@ -2,3 +2,8 @@
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# Binary artifacts — không đưa vào git (18 MB mỗi file)
+knowledge_Base_cadebot/app-debug.apk
+knowledge_Base_cadebot.zip
+PIPELINE_ANALYSIS_files/
