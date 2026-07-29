@@ -220,12 +220,39 @@ python3 scripts/eval_rag.py --fast                      # out-of-scope phải ch
 
 ## Kết quả đánh giá
 
-> Điền sau khi chạy `calibrate_threshold.py` và `eval_rag.py`.
+Đo ngày **2026-07-29** trên KB thật (69 segments, bge-m3, `semantic_search`, `top_k=3`).
 
-| Chỉ số | Giá trị | Ngày đo |
-|---|---|---|
-| SCORE_THRESHOLD đã chốt | _chưa đo_ | |
-| Out-of-scope bị chặn | _/15_ | |
-| In-scope tìm được context | _/15_ | |
-| Độ trễ câu out-of-scope | | |
-| Độ trễ câu in-scope | | |
+| Chỉ số | Giá trị |
+|---|---|
+| **SCORE_THRESHOLD đã chốt** | **0.51** |
+| In-scope: min / mean | 0.526 / 0.659 |
+| Out-of-scope: max / mean | 0.540 / 0.442 |
+| F1 / precision / recall | 0.968 / 0.938 / 1.000 |
+| In-scope tìm được context | **15/15** |
+| Out-of-scope bị chặn | **14/15** |
+| Độ trễ câu out-of-scope | **0.096 s** (không gọi LLM) |
+| Độ trễ câu in-scope | **~2 phút 22 s** (CPU) |
+| Segment giữ được `[chunk_id]` | **69/69** |
+| Idempotency | 5 lần sync → vẫn đúng 2 document |
+
+### Những điểm cần biết
+
+**1. Một câu out-of-scope lọt lưới.** `"cho tôi số điện thoại của bạn"` đạt 0.540 > ngưỡng.
+Nhưng KB *có* hotline thật (`096 607 70 88`), nên bot trả lời được — nhãn out-of-scope
+của câu này trong `eval/rag_queries.json` mới là thứ đáng ngờ, không phải retrieval sai.
+Nâng ngưỡng lên >0.540 sẽ chặn nhầm `"có chỗ đậu xe"` (0.526) và `"quán mở cửa mấy giờ"`
+(0.530) — đánh đổi không đáng.
+
+**2. `hybrid_search` không giúp gì.** Đã đo: kết quả *y hệt* `semantic_search`
+(Dify bỏ qua `weights` khi `reranking_enable=false`). `full_text_search` trả 0 điểm
+cho mọi câu vì KB dùng High Quality, không có keyword index. Muốn tách bạch hơn thì
+phải thêm reranker `bge-reranker-v2-m3`.
+
+**3. RAG chặn bịa *số liệu*, không chặn bịa *thuộc tính*.** Ví dụ thật: hỏi
+"Trà Đào Cam Sả giá bao nhiêu" → giá 45.000đ **đúng**, `sourceIds` **đúng**
+(`menu:VR_PEACH_TEA`), nhưng model thêm câu *"Đây là món best seller của Viva"* —
+trong khi KB nói **Viva Latte** mới là best seller. Model trộn thuộc tính giữa các
+chunk được truy xuất. Muốn siết thì phải sửa prompt hoặc fine-tune lại, RAG không lo được.
+
+**4. Độ trễ in-scope tăng so với `PIPELINE_ANALYSIS.md`** (~78s → ~142s) vì context
+injection làm prompt dài ra. Đây là bài toán riêng — lượng hoá INT4 hoặc chuyển GPU.

@@ -18,9 +18,18 @@ RETRIEVAL_TIMEOUT = int(os.getenv("RETRIEVAL_TIMEOUT", "15"))
 SYNC_TIMEOUT = int(os.getenv("SYNC_TIMEOUT", "60"))
 
 # ── Retrieval ──────────────────────────────────────────────────────────
-# SCORE_THRESHOLD được hiệu chỉnh bằng scripts/calibrate_threshold.py (Task 7).
-# 0.55 là giá trị khởi đầu, PHẢI chạy calibrate rồi cập nhật lại.
-SCORE_THRESHOLD = float(os.getenv("SCORE_THRESHOLD", "0.55"))
+# Hiệu chỉnh 2026-07-29 bằng scripts/calibrate_threshold.py trên KB thật
+# (bge-m3, 69 segments, semantic_search, top_k=3):
+#   in-scope : min=0.526 mean=0.659  (15/15 câu)
+#   out-scope: max=0.540 mean=0.442  (15/15 câu)
+#   F1=0.968 precision=0.938 recall=1.000
+# Hai phân phối chồng nhau 0.014, do DUY NHẤT câu "cho tôi số điện thoại của
+# bạn" (0.540) — mà KB có hotline thật nên bot trả lời được, tức là nhãn
+# out-of-scope của câu đó đáng ngờ chứ không phải retrieval sai.
+# Nâng ngưỡng lên >0.540 sẽ chặn nhầm "có chỗ đậu xe" (0.526) và "quán mở cửa
+# mấy giờ" (0.530) — đánh đổi không đáng.
+# hybrid_search đã thử: kết quả y hệt. full_text_search: trả 0 (KB high_quality).
+SCORE_THRESHOLD = float(os.getenv("SCORE_THRESHOLD", "0.51"))
 TOP_K = int(os.getenv("TOP_K", "3"))
 SEARCH_METHOD = "semantic_search"
 MAX_CONTEXT_CHARS = 2000
