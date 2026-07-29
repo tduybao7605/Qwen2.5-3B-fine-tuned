@@ -63,10 +63,30 @@ def chunk_markdown_file(path: Path) -> list[Chunk]:
         body = part.strip()
         if not body:
             continue
-        # Gắn tiêu đề file vào đầu chunk — nếu không, chunk "## 2. Tiện Ích"
-        # bị lấy ra một mình sẽ không biết là tiện ích của quán nào.
-        text = f"{title}\n\n## {body}"
-        chunks.append(Chunk(id=f"doc:{slug}#{i}", text=text, source=path.name))
+
+        # Section có `###` (vd. file 02: A. Cà Phê, B. Trà, ...) phải chẻ tiếp.
+        # Để nguyên thì chunk vượt max_tokens=500, Dify tự cắt và đoạn sau mất
+        # dòng [chunk_id] -> hỏng provenance đúng ở phần menu hay được hỏi nhất.
+        subs = re.split(r"^###\s+", body, flags=re.MULTILINE)
+        section_head = subs[0].strip()
+        section_title = section_head.splitlines()[0] if section_head else ""
+
+        if len(subs) == 1:
+            # Gắn tiêu đề file vào đầu chunk — nếu không, chunk "## 2. Tiện Ích"
+            # bị lấy ra một mình sẽ không biết là tiện ích của quán nào.
+            text = f"{title}\n\n## {body}"
+            chunks.append(Chunk(id=f"doc:{slug}#{i}", text=text, source=path.name))
+            continue
+
+        for j, sub in enumerate(subs[1:], start=1):
+            sub_body = sub.strip()
+            if not sub_body:
+                continue
+            # Chunk con mang cả tên file lẫn tên section cha để tự đứng vững.
+            text = f"{title}\n\n## {section_title}\n\n### {sub_body}"
+            chunks.append(
+                Chunk(id=f"doc:{slug}#{i}.{j}", text=text, source=path.name)
+            )
     return chunks
 
 

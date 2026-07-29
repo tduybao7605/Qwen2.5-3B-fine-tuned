@@ -54,3 +54,27 @@ def test_chunk_all_markdown_ids_are_globally_unique():
 def test_no_chunk_is_empty_or_whitespace_only():
     for c in chunk_all_markdown():
         assert c.text.strip(), f"chunk rỗng: {c.id}"
+
+
+def test_no_chunk_exceeds_dify_segment_budget():
+    """Chunk vượt max_tokens=500 sẽ bị Dify cắt nhỏ, đoạn sau mất dòng [chunk_id]
+    -> parse_chunk_id trả 'unknown' -> mất provenance. Giới hạn ~1200 ký tự tiếng Việt."""
+    oversized = [(c.id, len(c.text)) for c in chunk_all_markdown() if len(c.text) > 1200]
+    assert not oversized, f"chunk quá lớn, Dify sẽ cắt nhầm: {oversized}"
+
+
+def test_menu_groups_are_split_into_separate_chunks():
+    """Mỗi nhóm món (A. Cà Phê, B. Trà, ...) phải là chunk riêng để truy vấn
+    'món nào không có cà phê' không kéo về toàn bộ thực đơn."""
+    chunks = chunk_markdown_file(config.KB_DIR / "02_Menu_Va_Phuong_Phap_Pha_Che.md")
+    texts = [c.text for c in chunks]
+    coffee = next(t for t in texts if "Cà Phê (Coffee)" in t)
+    assert "Trà Hoa Nhài" not in coffee, "nhóm Cà Phê không được lẫn nhóm Trà"
+    # toppings vẫn phải còn, không được rơi mất khi chẻ nhỏ
+    assert any("Extra Shot" in t for t in texts)
+
+
+def test_subsection_chunks_keep_parent_section_context():
+    chunks = chunk_markdown_file(config.KB_DIR / "02_Menu_Va_Phuong_Phap_Pha_Che.md")
+    coffee = next(c for c in chunks if "Cà Phê (Coffee)" in c.text)
+    assert "VIVA RESERVE" in coffee.text.upper(), "chunk con vẫn phải mang tên quán"
