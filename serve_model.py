@@ -21,7 +21,7 @@ from pydantic import BaseModel
 from typing import List
 
 from rag import config as rag_config
-from rag.prompt import build_context_block, fallback_response
+from rag.prompt import build_context_block, fallback_response, sanitize_response
 from rag.retriever import Retriever
 
 # ── Models ─────────────────────────────────────────────────────────────
@@ -37,6 +37,14 @@ SYSTEM_PROMPT = (
     "Nếu không tìm thấy thông tin, hãy nói chưa có thông tin chính xác và đề nghị hỏi nhân viên. "
     "Trả lời ngắn gọn, thân thiện, phù hợp môi trường quán cà phê. "
     "Xưng là Cadebot hoặc mình, gọi khách là bạn.\n\n"
+    # Ràng buộc chống \"nói thêm\": model từng gán nhầm \"best seller\" của Viva Latte
+    # sang Trà Đào Cam Sả — thông tin lấy từ trí nhớ lúc fine-tune, không có trong context.
+    "QUY TẮC BẮT BUỘC:\n"
+    "- Chỉ trả lời ĐÚNG điều khách hỏi. Không thêm nhận xét, không quảng cáo thêm.\n"
+    "- Không gán cho một món bất kỳ tính chất nào (best seller, ngon nhất, được ưa chuộng, "
+    "signature...) trừ khi Knowledge Hub nói RÕ về CHÍNH món đó.\n"
+    "- Không suy diễn từ món này sang món khác.\n"
+    "- Thà trả lời ngắn còn hơn thêm chi tiết không có trong Knowledge Hub.\n\n"
     "Luôn trả lời theo định dạng JSON:\n"
     '{"intent":"MENU_QA|RECOMMENDATION|ADD_TO_CART_DRAFT|PROMOTION_QA|CALL_STAFF|FALLBACK",'
     '"confidence":0.9,"answerText":"...","spokenText":"...",'
@@ -206,6 +214,10 @@ async def chat(req: ChatRequest):
 
     new_tokens = output_ids[0][inputs["input_ids"].shape[1]:]
     response = chat_tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
+
+    # Bỏ các sourceIds model tự bịa; vá luôn ID thiếu tiền tố.
+    if retrieval is not None:
+        response = sanitize_response(response, retrieval.source_ids)
 
     payload = {"response": response}
     if retrieval is not None:
