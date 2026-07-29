@@ -12,8 +12,8 @@ Plan gốc: `docs/superpowers/plans/2026-07-29-bge-m3-rag-dify.md`.
 | Vector store | Qdrant | `http://qdrant:6333` (nội bộ, không publish ra host) |
 | Dify | 1.16.1 | `http://localhost` (nginx cổng 80) |
 | Ollama | `http://172.17.0.1:11434` | Từ trong container Dify |
-| Chunk separator | `\n---\n` | `process_rule` mode `custom` |
-| Max chunk tokens | 500 | Chunk lớn nhất hiện tại 694 ký tự |
+| Chunk separator | `\n---\n` | `process_rule` mode `custom`. Chunker phải lọc bỏ đường kẻ `---` trong file nguồn |
+| Max chunk tokens | 2000 | Lưới an toàn; chunk lớn nhất 694 ký tự. Để 500 thì Dify cắt đôi chunk tiếng Việt |
 | Indexing | High Quality | Không hạ về Economical được |
 
 ## Trạng thái đã dựng xong
@@ -21,9 +21,11 @@ Plan gốc: `docs/superpowers/plans/2026-07-29-bge-m3-rag-dify.md`.
 - [x] Ollama + `bge-m3` (dim 1024 đã verify)
 - [x] Dify 1.16.1 + Qdrant chạy, `http://localhost` trả 307 → `/install` trả 200
 - [x] Ollama reachable từ container `docker-api-1`
-- [ ] **Tài khoản admin Dify** — cần làm thủ công trên trình duyệt
-- [ ] **Đăng ký `bge-m3` làm Text Embedding provider**
-- [ ] **Tạo Knowledge base + lấy Dataset ID / API key**
+- [x] Tài khoản admin Dify
+- [x] Plugin **Ollama** cài từ Marketplace + khai báo model `bge-m3` (Text Embedding)
+- [x] Dataset `cadebot_kb` tạo qua API, đã gắn `bge-m3` + `high_quality`
+- [x] Sync 69 chunks, 69/69 segment giữ `[chunk_id]`
+- [x] Ngưỡng hiệu chỉnh = **0.51**, đã verify end-to-end
 
 ---
 
@@ -134,8 +136,13 @@ sudo systemctl enable --now ollama-docker-bridge
 ### 4.1 Tạo tài khoản admin
 Mở `http://localhost/install`, tạo email + mật khẩu.
 
-### 4.2 Đăng ký BGE-M3
-**Settings → Model Providers → Ollama → Add Model**
+### 4.2 Cài plugin Ollama rồi đăng ký BGE-M3
+
+> ⚠️ **Khác với plan gốc:** Dify 1.x **không build sẵn provider Ollama** (0.x mới có).
+> Phải vào `http://localhost/plugins` → **Marketplace** → tìm **Ollama** → **Install** trước.
+> Bỏ qua bước này thì API trả `Provider langgenius/ollama/ollama does not exist.`
+
+Cài xong: **Settings → Model Providers → Ollama → Add Model**
 
 | Trường | Giá trị |
 |---|---|
@@ -147,15 +154,23 @@ Mở `http://localhost/install`, tạo email + mật khẩu.
 
 Báo "Connection refused" → cầu nối ở mục 3 chưa chạy.
 
-### 4.3 Tạo Knowledge base
-**Knowledge → Create Knowledge → Import from text** (tạo document tạm bất kỳ):
+### 4.3 Tạo Knowledge base **bằng API** (khuyến nghị)
 
-- Chunk setting: **Custom**, Delimiter `---`, Max chunk length `500`, Overlap `0`
-- Index Method: **High Quality**
-- Embedding Model: **bge-m3**
-- Retrieval Setting: **Vector Search**
+> ⚠️ **Khác với plan gốc:** Dify 1.16.1 đã bỏ "Import from text" khỏi UI tạo KB.
+> Tạo qua UI bằng "Create an Empty Knowledge Base" thì KB **không gắn embedding model**
+> (`emb: None`) — document đầu tiên sẽ bị embed bằng System Default, và **không sửa
+> được sau đó**. Tạo qua API để gắn cứng `bge-m3` ngay từ đầu:
 
-Tạo xong thì **xóa document tạm** — `scripts/sync_kb.py` sẽ tạo document thật.
+```bash
+curl -s -X POST "http://localhost/v1/datasets" \
+  -H "Authorization: Bearer $DIFY_DATASET_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"cadebot_kb","indexing_technique":"high_quality","permission":"only_me",
+       "embedding_model":"bge-m3","embedding_model_provider":"langgenius/ollama/ollama"}'
+```
+
+Trả về `id` chính là `DIFY_DATASET_ID`. Chunk settings không cần đặt ở đây —
+`scripts/sync_kb.py` gửi `process_rule` riêng cho từng document.
 
 ### 4.4 Lấy Dataset ID + API key
 
@@ -200,12 +215,11 @@ python3 scripts/calibrate_threshold.py
 ```
 
 Cập nhật `SCORE_THRESHOLD` trong `rag/config.py` bằng con số script đề xuất.
-**Giá trị hiện tại `0.55` chỉ là tạm — chưa đo.**
+**Đã đo 2026-07-29 → 0.51** (xem mục "Kết quả đánh giá" cuối file).
 
-Nếu hai phân phối in-scope/out-of-scope chồng nhau, xử lý theo thứ tự:
-1. Đổi `SEARCH_METHOD` thành `"hybrid_search"` trong `rag/config.py`
-2. Chẻ nhỏ chunk hơn nữa
-3. Thêm reranker `bge-reranker-v2-m3`
+Nếu hai phân phối in-scope/out-of-scope chồng nhau: `hybrid_search` **đã thử và
+không giúp gì** (xem ghi chú 2 ở cuối). Đường còn lại là thêm reranker
+`bge-reranker-v2-m3`, hoặc chẻ chunk nhỏ hơn nữa.
 
 ## 6. Chạy server
 
