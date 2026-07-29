@@ -34,6 +34,12 @@ TOP_K = int(os.getenv("TOP_K", "3"))
 SEARCH_METHOD = "semantic_search"
 MAX_CONTEXT_CHARS = 2000
 
+# ── Sinh văn ───────────────────────────────────────────────────────────
+# Hạ từ 0.7 xuống để model bớt "sáng tạo" — nó hay tự gắn từ khen ngợi
+# ("best seller", "được yêu thích nhất") lấy từ trọng số fine-tune chứ không
+# có trong context. Modelfile của bản Ollama vốn đã để 0.1.
+GEN_TEMPERATURE = float(os.getenv("GEN_TEMPERATURE", "0.2"))
+
 # ── KB sources ─────────────────────────────────────────────────────────
 KB_DIR = REPO_ROOT / "knowledge_Base_cadebot"
 DB_FILE = KB_DIR / "demo_cafe.db"

@@ -207,7 +207,7 @@ async def chat(req: ChatRequest):
         output_ids = chat_model.generate(
             **inputs,
             max_new_tokens=400,
-            temperature=0.7,
+            temperature=rag_config.GEN_TEMPERATURE,
             do_sample=True,
             pad_token_id=chat_tokenizer.eos_token_id,
         )
