@@ -1,0 +1,36 @@
+{
+  "in_scope": [
+    {"q": "Viva Latte giá bao nhiêu", "expect": "menu:VR_LATTE_M"},
+    {"q": "Trà Đào Cam Sả có vị chua không", "expect": null},
+    {"q": "món nào không có cà phê", "expect": null},
+    {"q": "quán mở cửa mấy giờ", "expect": null},
+    {"q": "địa chỉ chi nhánh Bình Thới ở đâu", "expect": null},
+    {"q": "có combo nào tiết kiệm không", "expect": null},
+    {"q": "Matcha Latte có sữa không", "expect": null},
+    {"q": "thanh toán bằng MoMo được không", "expect": null},
+    {"q": "có wifi không", "expect": null},
+    {"q": "Latte size L có không", "expect": "menu:VR_LATTE_M"},
+    {"q": "Tiramisu bao nhiêu tiền", "expect": null},
+    {"q": "robot có giao món đến bàn không", "expect": null},
+    {"q": "có chỗ đậu xe ô tô không", "expect": null},
+    {"q": "topping oat milk có không", "expect": null},
+    {"q": "hotline đặt bàn số mấy", "expect": null}
+  ],
+  "out_of_scope": [
+    {"q": "hôm nay trời có mưa không"},
+    {"q": "giá vàng hôm nay bao nhiêu"},
+    {"q": "ai là tổng thống Mỹ"},
+    {"q": "kể tôi nghe một câu chuyện cười"},
+    {"q": "đội tuyển Việt Nam đá mấy giờ"},
+    {"q": "cách nấu phở bò"},
+    {"q": "dịch câu này sang tiếng Anh"},
+    {"q": "2 cộng 2 bằng mấy"},
+    {"q": "bitcoin đang bao nhiêu"},
+    {"q": "gợi ý cho tôi một bộ phim hay"},
+    {"q": "làm sao để giảm cân"},
+    {"q": "cho tôi số điện thoại của bạn"},
+    {"q": "quán có bán xe máy không"},
+    {"q": "tôi muốn đặt vé máy bay"},
+    {"q": "Starbucks có chi nhánh nào gần đây"}
+  ]
+}
