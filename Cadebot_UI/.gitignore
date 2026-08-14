@@ -13,3 +13,6 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Kotlin compiler session files — rác build, không thuộc về VCS
+.kotlin/
