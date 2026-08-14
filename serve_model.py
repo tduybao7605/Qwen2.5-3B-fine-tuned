@@ -130,7 +130,9 @@ class HistoryItem(BaseModel):
 class ChatRequest(BaseModel):
     message: str
     history: List[HistoryItem] = []
-    use_rag: bool = True          # optional — Android không gửi, mặc định bật
+    # Tắt mặc định 2026-08-04: có RAG mất ~190s, vượt giới hạn 100s của
+    # Cloudflare edge proxy (lỗi 524). Không RAG còn ~95s, qua được ngưỡng.
+    use_rag: bool = False          # optional — Android không gửi field này
     top_k: int | None = None      # optional — để debug
 
 
@@ -159,7 +161,13 @@ async def transcribe(file: UploadFile = File(...)):
             capture_output=True, check=True
         )
         audio, _ = sf.read(wav_path, dtype="float32")
-        result = stt_pipeline({"array": audio, "sampling_rate": 16000})
+        # Whisper chỉ nuốt được 30s mỗi lần. Dài hơn thì phải bật long-form,
+        # mà long-form bắt buộc model dự đoán timestamp token — không truyền
+        # return_timestamps là nó ném ValueError. Robot lắng nghe liên tục nên
+        # đây là đường thường gặp, không phải ngoại lệ hiếm.
+        duration_s = len(audio) / 16000
+        extra = {"return_timestamps": True} if duration_s > 30 else {}
+        result = stt_pipeline({"array": audio, "sampling_rate": 16000}, **extra)
         return {"text": result["text"].strip()}
     finally:
         os.unlink(tmp_path)

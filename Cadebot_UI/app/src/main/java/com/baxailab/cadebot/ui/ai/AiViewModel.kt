@@ -90,5 +90,7 @@ class AiViewModel @Inject constructor(
             isListening = false,
             isTranscribing = false
         )
+        // Nói xong là gửi luôn, khách không phải bấm Send nữa.
+        sendMessage()
     }
 }

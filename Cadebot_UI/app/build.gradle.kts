@@ -24,7 +24,7 @@ android {
         val localProps = Properties()
         rootProject.file("local.properties").takeIf { it.exists() }?.reader()?.use { localProps.load(it) }
         buildConfigField("String", "GROQ_API_KEY", "\"${localProps.getProperty("groq.api.key", "")}\"")
-        buildConfigField("String", "CADEBOT_API_URL", "\"${localProps.getProperty("cadebot.api.url", "http://192.168.1.100:8000")}\"")
+        buildConfigField("String", "CADEBOT_API_URL", "\"${localProps.getProperty("cadebot.api.url", "https://duybao.tdbao-brian.work")}\"")
     }
 
     buildTypes {

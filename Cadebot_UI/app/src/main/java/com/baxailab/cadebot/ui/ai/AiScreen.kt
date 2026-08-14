@@ -2,6 +2,8 @@ package com.baxailab.cadebot.ui.ai
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.speech.tts.TextToSpeech
+import java.util.Locale
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.animateColorAsState
@@ -59,6 +61,30 @@ fun AiScreen(
     val sttService = remember { GroqSttService(context) }
     DisposableEffect(sttService) {
         onDispose { sttService.release() }
+    }
+
+    // TTS — đọc câu trả lời của Cadebot
+    val tts = remember {
+        TextToSpeech(context) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                // no-op, language set below
+            }
+        }
+    }
+    LaunchedEffect(Unit) {
+        tts.language = Locale("vi", "VN")
+    }
+    DisposableEffect(tts) {
+        onDispose {
+            tts.stop()
+            tts.shutdown()
+        }
+    }
+    val lastMessage = uiState.messages.lastOrNull()
+    LaunchedEffect(lastMessage?.id) {
+        lastMessage?.takeIf { !it.isUser }?.let { msg ->
+            tts.speak(msg.content, TextToSpeech.QUEUE_FLUSH, null, msg.id)
+        }
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -208,7 +234,7 @@ fun AiScreen(
                                 viewModel.setListening(false)
                                 viewModel.setTranscribing(true)
                                 scope.launch {
-                                    val text = sttService.transcribe(BuildConfig.GROQ_API_KEY)
+                                    val text = sttService.transcribe(BuildConfig.CADEBOT_API_URL)
                                     if (!text.isNullOrBlank()) viewModel.onSpeechResult(text)
                                     else viewModel.setTranscribing(false)
                                 }

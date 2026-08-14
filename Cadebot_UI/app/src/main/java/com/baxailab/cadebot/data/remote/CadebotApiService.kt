@@ -16,7 +16,9 @@ class CadebotApiService(
 ) {
     private val client = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(90, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(300, TimeUnit.SECONDS)
+        .callTimeout(330, TimeUnit.SECONDS)
         .build()
 
     suspend fun processQuery(message: String, history: List<AiMessage>): AiMessage =
@@ -69,6 +71,7 @@ class CadebotApiService(
 
             val json = JSONObject(raw.substring(start, end + 1))
             val answerText = json.optString("answerText").takeIf { it.isNotBlank() } ?: raw.trim()
+            val spokenText = json.optString("spokenText").takeIf { it.isNotBlank() } ?: answerText
             val recommendedArr = json.optJSONArray("recommendedItems")
             val recommendedIds = mutableListOf<String>()
 
@@ -82,7 +85,7 @@ class CadebotApiService(
                 }
             }
 
-            AiMessage(content = answerText, isUser = false, recommendedItems = recommendedIds)
+            AiMessage(content = answerText, isUser = false, spokenText = spokenText, recommendedItems = recommendedIds)
         }.getOrElse {
             AiMessage(content = raw.trim(), isUser = false)
         }

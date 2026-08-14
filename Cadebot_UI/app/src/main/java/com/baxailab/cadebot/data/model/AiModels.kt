@@ -20,6 +20,7 @@ data class AiMessage(
     val id: String = java.util.UUID.randomUUID().toString(),
     val content: String,
     val isUser: Boolean,
+    val spokenText: String = "",
     val recommendedItems: List<String> = emptyList(),
     val timestamp: Long = System.currentTimeMillis()
 )

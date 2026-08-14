@@ -18,7 +18,10 @@ class GroqSttService(private val context: Context) {
     private var audioFile: File? = null
 
     private val client = OkHttpClient.Builder()
-        .callTimeout(30, TimeUnit.SECONDS)
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(300, TimeUnit.SECONDS)  // PhoWhisper-large trên CPU rất chậm
+        .callTimeout(330, TimeUnit.SECONDS)
         .build()
 
     fun startRecording() {
@@ -44,7 +47,8 @@ class GroqSttService(private val context: Context) {
         mediaRecorder = null
     }
 
-    suspend fun transcribe(apiKey: String): String? = withContext(Dispatchers.IO) {
+    // Gọi PhoWhisper-large trên laptop thay vì Groq API
+    suspend fun transcribe(serverUrl: String): String? = withContext(Dispatchers.IO) {
         val file = audioFile?.takeIf { it.exists() && it.length() > 0 } ?: return@withContext null
 
         runCatching {
@@ -54,14 +58,10 @@ class GroqSttService(private val context: Context) {
                     "file", "audio.m4a",
                     file.asRequestBody("audio/mp4".toMediaType())
                 )
-                .addFormDataPart("model", "whisper-large-v3-turbo")
-                .addFormDataPart("language", "vi")
-                .addFormDataPart("response_format", "json")
                 .build()
 
             val request = Request.Builder()
-                .url("https://api.groq.com/openai/v1/audio/transcriptions")
-                .addHeader("Authorization", "Bearer $apiKey")
+                .url("$serverUrl/stt")
                 .post(body)
                 .build()
 

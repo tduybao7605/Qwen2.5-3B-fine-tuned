@@ -8,6 +8,7 @@ fastapi==0.128.8
 uvicorn==0.49.0
 numpy==1.26.4
 soundfile==0.13.1
+python-multipart==0.0.20
 
 # RAG layer (mới)
 requests==2.32.5
