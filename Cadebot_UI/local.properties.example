@@ -1,0 +1,17 @@
+# Copy sang local.properties rồi điền. local.properties nằm trong .gitignore —
+# đừng bao giờ commit file đó, nó chứa API key thật.
+#
+#   cp local.properties.example local.properties
+
+# Android SDK — Android Studio thường tự sinh dòng này.
+sdk.dir=/path/to/Android/Sdk
+
+# Groq Whisper API key cho speech-to-text phía client.
+# Lấy ở https://console.groq.com/keys
+groq.api.key=gsk_your_key_here
+
+# URL của Cadebot API server.
+#   http://10.0.2.2:8000        — Android emulator gọi về máy host
+#   http://192.168.1.x:8000     — thiết bị thật, cùng mạng LAN với server
+#   https://your-domain.example — server đã expose qua tunnel/reverse proxy
+cadebot.api.url=http://10.0.2.2:8000
