@@ -1,6 +1,6 @@
 """
 Cadebot API Server
-Chạy: python3 serve_model.py
+Chạy: python3 -m cadebot
 Endpoints:
   POST /stt    — Speech-to-Text bằng PhoWhisper-large
   POST /chat   — Trả lời bằng Qwen2.5-3B + LoRA (có RAG qua Dify + BGE-M3)
@@ -11,18 +11,18 @@ Endpoints:
 import json
 import os
 import tempfile
-import torch
-import uvicorn
-import numpy as np
 from contextlib import asynccontextmanager
+from typing import List
+
+import torch
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List
 
-from rag import config as rag_config
-from rag.prompt import build_context_block, fallback_response, sanitize_response
-from rag.retriever import Retriever
+from cadebot import models
+from cadebot.rag import config as rag_config
+from cadebot.rag.prompt import build_context_block, fallback_response, sanitize_response
+from cadebot.rag.retriever import Retriever
 
 # ── Models ─────────────────────────────────────────────────────────────
 chat_model = None
@@ -52,42 +52,6 @@ SYSTEM_PROMPT = (
 )
 
 
-def load_stt():
-    global stt_pipeline
-    from transformers import pipeline
-    print("Loading PhoWhisper-large (STT)...")
-    stt_pipeline = pipeline(
-        "automatic-speech-recognition",
-        model="vinai/PhoWhisper-large",
-        device="cpu",
-        torch_dtype=torch.float32,
-    )
-    print("✅ PhoWhisper-large ready!")
-
-
-def load_chat():
-    global chat_model, chat_tokenizer
-    from transformers import AutoModelForCausalLM, AutoTokenizer
-    from peft import PeftModel
-
-    base_model_name = "Qwen/Qwen2.5-3B-Instruct"
-    lora_path = "./cadebot-lora"
-
-    print("Loading tokenizer (chat)...")
-    chat_tokenizer = AutoTokenizer.from_pretrained(lora_path)
-
-    print("Loading Qwen2.5-3B base model...")
-    base = AutoModelForCausalLM.from_pretrained(
-        base_model_name,
-        dtype=torch.float16,
-        device_map="auto",
-    )
-    print("Loading LoRA adapter...")
-    chat_model = PeftModel.from_pretrained(base, lora_path)
-    chat_model.eval()
-    print("✅ Qwen2.5-3B + LoRA ready!")
-
-
 def load_retriever():
     global retriever
     if not rag_config.DIFY_DATASET_API_KEY or not rag_config.DIFY_DATASET_ID:
@@ -105,8 +69,9 @@ def load_retriever():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    load_stt()
-    load_chat()
+    global stt_pipeline, chat_model, chat_tokenizer
+    stt_pipeline = models.load_stt()
+    chat_model, chat_tokenizer = models.load_chat()
     load_retriever()
     yield
 
@@ -265,7 +230,3 @@ async def health():
         "embedding_model": rag_config.EMBEDDING_MODEL,
         "score_threshold": rag_config.SCORE_THRESHOLD,
     }
-
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)

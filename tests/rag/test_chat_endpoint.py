@@ -9,7 +9,7 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 
-import serve_model
+from cadebot import api
 from cadebot.rag.retriever import RetrievalResult, RetrievedChunk
 
 
@@ -27,23 +27,25 @@ class FakeRetriever:
 
 @pytest.fixture
 def client():
-    return TestClient(serve_model.app)
+    return TestClient(api.app)
 
 
 @pytest.fixture(autouse=True)
 def _no_models():
     """Đảm bảo LLM chưa được load — chạm vào nó là lỗi ngay."""
-    serve_model.chat_model = None
-    serve_model.chat_tokenizer = None
+    api.chat_model = None
+    api.chat_tokenizer = None
     yield
-    serve_model.retriever = None
+    api.retriever = None
 
 
 def test_out_of_scope_returns_fallback_without_touching_llm(client):
     fake = FakeRetriever(RetrievalResult(chunks=[], in_scope=False, top_score=0.21))
-    serve_model.retriever = fake
+    api.retriever = fake
 
-    resp = client.post("/chat", json={"message": "hôm nay trời có mưa không"})
+    resp = client.post(
+        "/chat", json={"message": "hôm nay trời có mưa không", "use_rag": True}
+    )
 
     assert resp.status_code == 200
     body = resp.json()
@@ -59,18 +61,31 @@ def test_out_of_scope_returns_fallback_without_touching_llm(client):
 
 def test_android_payload_shape_still_works(client):
     """Android chỉ gửi {message, history} — không có use_rag."""
-    serve_model.retriever = FakeRetriever(
+    api.retriever = FakeRetriever(
         RetrievalResult(chunks=[], in_scope=False, top_score=0.1)
     )
-    resp = client.post("/chat", json={"message": "giá vàng hôm nay", "history": []})
+    resp = client.post(
+        "/chat", json={"message": "giá vàng hôm nay", "history": [], "use_rag": True}
+    )
     assert resp.status_code == 200
     # `response` phải luôn là chuỗi JSON đúng schema cũ
     assert isinstance(resp.json()["response"], str)
     json.loads(resp.json()["response"])
 
 
+def test_use_rag_defaults_off_for_android_payload():
+    """Android không gửi use_rag. Từ 2026-08-04 mặc định là TẮT: có RAG mất
+    ~190s, vượt giới hạn 100s của Cloudflare edge proxy (lỗi 524).
+
+    Đánh đổi được ghi lại ở đây cho rõ: với mặc định này client KHÔNG được
+    hưởng chặn cứng out-of-scope — muốn có thì phải gửi use_rag=true.
+    """
+    req = api.ChatRequest(message="giá vàng hôm nay", history=[])
+    assert req.use_rag is False
+
+
 def test_retrieve_endpoint_reports_scores(client):
-    serve_model.retriever = FakeRetriever(
+    api.retriever = FakeRetriever(
         RetrievalResult(
             chunks=[RetrievedChunk("menu:VR_LATTE_M", "Giá 55,000 VNĐ", 0.82)],
             in_scope=True,
@@ -84,7 +99,7 @@ def test_retrieve_endpoint_reports_scores(client):
 
 
 def test_health_exposes_rag_state(client):
-    serve_model.retriever = None
+    api.retriever = None
     body = client.get("/health").json()
     assert body["rag_ready"] is False
     assert body["embedding_model"] == "bge-m3"
