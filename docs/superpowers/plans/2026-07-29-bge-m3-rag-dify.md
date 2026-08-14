@@ -19,7 +19,7 @@
 3. **`sourceIds` luôn rỗng**: không truy vết được câu trả lời đến từ đâu.
 4. **Chống out-of-scope yếu**: chỉ dựa vào 18 mẫu FALLBACK trong training data.
 
-Kế hoạch này hiện thực hoá Giai đoạn 1-5 của `knowledge_Base_cadebot/cadebot-plan.md`, với hai điều chỉnh so với bản gốc: embedding model chốt là **BGE-M3** (không phải Qwen3-Embedding), và nguồn KB là **5 file markdown 01-05 + sync động từ `demo_cafe.db`** (không dùng file tĩnh `db_exported_kb.md`).
+Kế hoạch này hiện thực hoá Giai đoạn 1-5 của `knowledge_base/cadebot-plan.md`, với hai điều chỉnh so với bản gốc: embedding model chốt là **BGE-M3** (không phải Qwen3-Embedding), và nguồn KB là **5 file markdown 01-05 + sync động từ `demo_cafe.db`** (không dùng file tĩnh `db_exported_kb.md`).
 
 Kết quả mong đợi: hỏi "Trà Đào Cam Sả bao nhiêu tiền?" → retrieval trả chunk `menu:VR_PEACH_TEA` → Qwen trả lời đúng 45.000đ kèm `sourceIds:["menu:VR_PEACH_TEA"]`. Hỏi "Hôm nay trời có mưa không?" → không chunk nào vượt ngưỡng → trả JSON FALLBACK cố định, **không tốn 78 giây gọi LLM**.
 
@@ -31,8 +31,8 @@ Mọi task đều ngầm chịu các ràng buộc sau. Giá trị chép nguyên 
 
 - **Embedding model: `bge-m3`, dimension = 1024, max input 8192 tokens.** Đổi model giữa chừng = phải re-embed toàn bộ KB. Chốt từ đây.
 - **Vector store: Qdrant**, `VECTOR_STORE=qdrant`, cổng `6333`.
-- **Dify base URL: `http://localhost/v1`** (cổng 80, nginx của Dify Docker Compose) — trùng với `knowledge_Base_cadebot/cadebot_dify_bridge.py` và `demo_db_to_dify.py`.
-- **Ollama phải nghe được từ trong container Dify**: dùng `knowledge_Base_cadebot/ollama_docker_bridge.py` (listen `172.17.0.1:11434` → forward `127.0.0.1:11434`). Trong Dify, base URL của Ollama provider là `http://172.17.0.1:11434`.
+- **Dify base URL: `http://localhost/v1`** (cổng 80, nginx của Dify Docker Compose) — trùng với `knowledge_base/cadebot_dify_bridge.py` và `demo_db_to_dify.py`.
+- **Ollama phải nghe được từ trong container Dify**: dùng `knowledge_base/ollama_docker_bridge.py` (listen `172.17.0.1:11434` → forward `127.0.0.1:11434`). Trong Dify, base URL của Ollama provider là `http://172.17.0.1:11434`.
 - **Indexing mode: `high_quality`** (có embedding). Không hạ được về `economical` sau khi đã tạo KB.
 - **Chunk ID convention (bắt buộc, đã tồn tại trong `dataset/train.jsonl`)**: `menu:<item_code>`, `faq:<faq_id>`, `promo:<promo_code>`, `doc:<tên_file>#<số_section>`. Ví dụ: `menu:VR_LATTE`, `faq:faq_001`, `promo:VR_COMBO_A`, `doc:01_Tong_Quan#2`.
 - **Mọi chunk mở đầu bằng đúng một dòng `[<chunk_id>]`** rồi mới tới nội dung. Đây là cách lấy provenance mà không cần Dify metadata API.
@@ -186,7 +186,7 @@ SEARCH_METHOD = "semantic_search"
 MAX_CONTEXT_CHARS = 2000
 
 # ── KB sources ─────────────────────────────────────────────────────────
-KB_DIR = REPO_ROOT / "knowledge_Base_cadebot"
+KB_DIR = REPO_ROOT / "knowledge_base"
 DB_FILE = KB_DIR / "demo_cafe.db"
 MARKDOWN_FILES = [
     "01_Tong_Quan_Thuong_Hieu.md",
@@ -392,7 +392,7 @@ def chunk_all_markdown() -> list[Chunk]:
 Run: `python3 -m pytest tests/rag/test_chunker.py -v`
 Expected: 8 passed
 
-Nếu `test_faq_file_yields_one_chunk_per_qa_pair` báo 20 thay vì 21 — đếm lại bằng `grep -c '^Q:' knowledge_Base_cadebot/05_Bo_Cau_Hoi_Thuong_Gap_FAQ.md` và sửa con số kỳ vọng trong test cho khớp thực tế, đừng sửa regex cho vừa số.
+Nếu `test_faq_file_yields_one_chunk_per_qa_pair` báo 20 thay vì 21 — đếm lại bằng `grep -c '^Q:' knowledge_base/05_Bo_Cau_Hoi_Thuong_Gap_FAQ.md` và sửa con số kỳ vọng trong test cho khớp thực tế, đừng sửa regex cho vừa số.
 
 - [ ] **Step 5: Kiểm tra mắt thường output chunk**
 
@@ -431,8 +431,8 @@ git commit -m "feat(rag): chunk 5 markdown KB files with stable chunk IDs"
 
 **Bối cảnh cần biết (quan trọng):**
 
-- `knowledge_Base_cadebot/demo_db_to_dify.py` đã có `get_menu_data_from_db()` nhưng nó **string-build ra một khối markdown lớn** — không dùng lại trực tiếp được vì ta cần chunk rời có ID. Ta viết lại, giữ nguyên **tên hàm `get_menu_data()`** theo đúng Giai đoạn 4/7 của `cadebot-plan.md`: sau này đổi sang DB thật của quán thì **chỉ sửa bên trong hàm này**.
-- **Có drift tên cột giữa hai schema**: `knowledge_Base_cadebot/schema.sql` (PostgreSQL) dùng `is_available`, còn `demo_cafe.db` (SQLite) dùng `available`. Code phải dò tên cột thay vì hardcode, nếu không sẽ vỡ khi chuyển sang Postgres.
+- `knowledge_base/demo_db_to_dify.py` đã có `get_menu_data_from_db()` nhưng nó **string-build ra một khối markdown lớn** — không dùng lại trực tiếp được vì ta cần chunk rời có ID. Ta viết lại, giữ nguyên **tên hàm `get_menu_data()`** theo đúng Giai đoạn 4/7 của `cadebot-plan.md`: sau này đổi sang DB thật của quán thì **chỉ sửa bên trong hàm này**.
+- **Có drift tên cột giữa hai schema**: `knowledge_base/schema.sql` (PostgreSQL) dùng `is_available`, còn `demo_cafe.db` (SQLite) dùng `available`. Code phải dò tên cột thay vì hardcode, nếu không sẽ vỡ khi chuyển sang Postgres.
 - Số dòng thực tế trong `demo_cafe.db`: `menu_items` = 12, `promotions` = 3, `faqs` = 20.
 - Cột `attributes` là JSON lưu dạng TEXT, ví dụ `{"caffeine": true, "sizeOptions": ["S","M","L"], "toppings": [...]}`. Cần trải phẳng thành tiếng Việt đọc được thì embedding mới bắt được câu hỏi kiểu "Latte có size L không?".
 
@@ -672,7 +672,7 @@ Expected: `200` hoặc `307`. Mở `http://localhost` trên trình duyệt, tạ
 Ollama chỉ nghe `127.0.0.1:11434`, container Dify không với tới được. Repo **đã có sẵn** cầu nối — dùng lại, đừng viết mới:
 
 ```bash
-python3 knowledge_Base_cadebot/ollama_docker_bridge.py &
+python3 knowledge_base/ollama_docker_bridge.py &
 ```
 
 Xác minh từ **bên trong** container Dify:
@@ -693,7 +693,7 @@ Description=Ollama docker0 bridge for Dify
 After=network.target ollama.service
 
 [Service]
-ExecStart=/usr/bin/python3 /home/ncd/learnspaces/Qwen2.5-3B-fine-tuned/knowledge_Base_cadebot/ollama_docker_bridge.py
+ExecStart=/usr/bin/python3 /home/ncd/learnspaces/Qwen2.5-3B-fine-tuned/knowledge_base/ollama_docker_bridge.py
 Restart=always
 User=ncd
 
@@ -779,7 +779,7 @@ git commit -m "docs: Dify + Qdrant + BGE-M3 (Ollama) setup guide"
   - `rag.dify_kb.DifyKnowledgeClient` với `.find_document_id(name) -> str | None`, `.upsert_document(name, text) -> dict`
   - `scripts/sync_kb.py` CLI
 
-**Bối cảnh:** `knowledge_Base_cadebot/demo_db_to_dify.py` đã có `sync_to_dify_dataset()` gọi `create_by_text`, nhưng nó **luôn tạo document mới** → chạy 2 lần là KB có 2 bản trùng, retrieval trả kết quả nhân đôi. Ta phải list trước, có rồi thì `update_by_text`.
+**Bối cảnh:** `knowledge_base/demo_db_to_dify.py` đã có `sync_to_dify_dataset()` gọi `create_by_text`, nhưng nó **luôn tạo document mới** → chạy 2 lần là KB có 2 bản trùng, retrieval trả kết quả nhân đôi. Ta phải list trước, có rồi thì `update_by_text`.
 
 - [ ] **Step 1: Viết test cho kb_builder**
 
@@ -1004,11 +1004,11 @@ Vào UI kiểm tra: vẫn đúng **2 document**, không phải 4. Đây chính l
 - [ ] **Step 9: Test end-to-end sửa DB → KB đổi theo (Giai đoạn 4 của cadebot-plan.md)**
 
 ```bash
-sqlite3 knowledge_Base_cadebot/demo_cafe.db \
+sqlite3 knowledge_base/demo_cafe.db \
   "UPDATE menu_items SET price = 59000 WHERE item_code = 'VR_LATTE_M';"
 python3 scripts/sync_kb.py
 # Dify UI → Retrieval Testing → "Viva Latte giá bao nhiêu" → phải thấy 59,000
-sqlite3 knowledge_Base_cadebot/demo_cafe.db \
+sqlite3 knowledge_base/demo_cafe.db \
   "UPDATE menu_items SET price = 55000 WHERE item_code = 'VR_LATTE_M';"
 python3 scripts/sync_kb.py
 ```

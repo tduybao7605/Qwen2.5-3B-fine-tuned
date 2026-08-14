@@ -50,7 +50,7 @@ BASE_MODEL = os.getenv("CADEBOT_BASE_MODEL", "Qwen/Qwen2.5-3B-Instruct")
 STT_MODEL = os.getenv("CADEBOT_STT_MODEL", "vinai/PhoWhisper-large")
 
 # ── KB sources ─────────────────────────────────────────────────────────
-KB_DIR = REPO_ROOT / "knowledge_Base_cadebot"
+KB_DIR = REPO_ROOT / "knowledge_base"
 DB_FILE = KB_DIR / "demo_cafe.db"
 MARKDOWN_FILES = [
     "01_Tong_Quan_Thuong_Hieu.md",

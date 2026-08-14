@@ -1,0 +1,7 @@
+# Chặn tất cả, rồi mở lại đúng thứ image cần. An toàn hơn kiểu liệt kê trừ dần:
+# thêm file mới vào repo sẽ không vô tình lọt vào build context.
+*
+!requirements.txt
+!src/
+**/__pycache__
+**/*.pyc

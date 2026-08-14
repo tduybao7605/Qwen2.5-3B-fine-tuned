@@ -1,9 +1,25 @@
+# Secrets
 .env
+
+# Python
 __pycache__/
 *.pyc
 .pytest_cache/
+*.egg-info/
+build/
+dist/
+.venv/
 
-# Binary artifacts — không đưa vào git (18 MB mỗi file)
-knowledge_Base_cadebot/app-debug.apk
-knowledge_Base_cadebot.zip
+# Build artifacts — phát hành qua GitHub Releases, không đưa vào Git
+*.apk
+*.zip
+*.docx
+
+# Trung gian của quá trình training — sinh lại được từ training/finetune_cadebot.py
+cadebot-lora/checkpoint-*/
+cadebot-merged/
+*.gguf
+
+# Báo cáo tự sinh
+PIPELINE_ANALYSIS.html
 PIPELINE_ANALYSIS_files/

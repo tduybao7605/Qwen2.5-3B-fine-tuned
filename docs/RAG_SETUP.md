@@ -100,7 +100,7 @@ docker builder prune -af  # thu hồi build cache nếu thiếu chỗ (an toàn,
 Ollama chỉ nghe `127.0.0.1:11434` nên container không với tới được. Dùng script có sẵn:
 
 ```bash
-python3 knowledge_Base_cadebot/ollama_docker_bridge.py &
+python3 knowledge_base/ollama_docker_bridge.py &
 ```
 
 Verify **từ trong container**:
@@ -119,7 +119,7 @@ Description=Ollama docker0 bridge for Dify
 After=network.target ollama.service
 
 [Service]
-ExecStart=/usr/bin/python3 /home/ncd/learnspaces/Qwen2.5-3B-fine-tuned/knowledge_Base_cadebot/ollama_docker_bridge.py
+ExecStart=/usr/bin/python3 /home/ncd/learnspaces/Qwen2.5-3B-fine-tuned/knowledge_base/ollama_docker_bridge.py
 Restart=always
 User=ncd
 

@@ -1,0 +1,34 @@
+services:
+  cadebot-api:
+    build: .
+    container_name: cadebot-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Trong network của Dify, gọi bằng tên service "nginx" thay vì
+      # "localhost" (localhost trong container là chính nó, không phải host).
+      DIFY_BASE_URL: http://nginx/v1
+    ports:
+      # Host port 8000 -> đây là port cloudflared trỏ tới.
+      - "8000:8000"
+    volumes:
+      # Model + LoRA — không bake vào image, mount từ repo.
+      - ./cadebot-lora:/app/cadebot-lora:ro
+      # Cache HuggingFace (base Qwen2.5-3B + PhoWhisper-large) — tải 1 lần,
+      # dùng lại giữa các lần rebuild/restart container.
+      - hf_cache:/root/.cache/huggingface
+    networks:
+      - default
+      - dify_network
+
+networks:
+  default:
+  # Network của stack Dify (docker compose project "docker" ở
+  # /home/ncd/dify/docker) — phải đã chạy `docker compose up` ở đó trước.
+  dify_network:
+    external: true
+    name: docker_default
+
+volumes:
+  hf_cache:
