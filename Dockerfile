@@ -1,5 +1,5 @@
-# Cadebot API — serve_model.py (STT + LLM + RAG client)
-# Chạy CPU (không có GPU trên máy host, xem PIPELINE_ANALYSIS.md).
+# Cadebot API — src/cadebot (STT + LLM + RAG client)
+# Chạy CPU (không có GPU trên máy host, xem docs/performance.md).
 # Model weights KHÔNG bake vào image — mount qua volume (xem docker-compose.yml).
 FROM python:3.12-slim
 

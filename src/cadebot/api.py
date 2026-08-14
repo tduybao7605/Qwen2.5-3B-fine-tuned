@@ -55,7 +55,7 @@ SYSTEM_PROMPT = (
 def load_retriever():
     global retriever
     if not rag_config.DIFY_DATASET_API_KEY or not rag_config.DIFY_DATASET_ID:
-        print("⚠️  Chưa cấu hình Dify — chạy KHÔNG có RAG. Xem docs/RAG_SETUP.md")
+        print("⚠️  Chưa cấu hình Dify — chạy KHÔNG có RAG. Xem docs/rag-setup.md")
         return
     retriever = Retriever()
     probe = retriever.retrieve("Viva Latte giá bao nhiêu")

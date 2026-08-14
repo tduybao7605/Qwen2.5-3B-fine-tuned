@@ -1,4 +1,4 @@
-# Cadebot — pin theo máy deploy (python3 = 3.12.3), xem docs/RAG_SETUP.md
+# Cadebot — pin theo máy deploy (python3 = 3.12.3), xem docs/rag-setup.md
 # Core serving (đã cài sẵn, pin lại cho reproducible)
 torch==2.10.0
 transformers==5.12.1

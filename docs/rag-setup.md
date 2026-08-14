@@ -268,5 +268,5 @@ phải thêm reranker `bge-reranker-v2-m3`.
 trong khi KB nói **Viva Latte** mới là best seller. Model trộn thuộc tính giữa các
 chunk được truy xuất. Muốn siết thì phải sửa prompt hoặc fine-tune lại, RAG không lo được.
 
-**4. Độ trễ in-scope tăng so với `PIPELINE_ANALYSIS.md`** (~78s → ~142s) vì context
+**4. Độ trễ in-scope tăng so với `docs/performance.md`** (~78s → ~142s) vì context
 injection làm prompt dài ra. Đây là bài toán riêng — lượng hoá INT4 hoặc chuyển GPU.

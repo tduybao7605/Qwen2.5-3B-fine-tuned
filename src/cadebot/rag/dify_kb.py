@@ -13,7 +13,7 @@ class DifyKnowledgeClient:
         if not self.api_key or not self.dataset_id:
             raise RuntimeError(
                 "Thiếu DIFY_DATASET_API_KEY / DIFY_DATASET_ID. "
-                "Xem docs/RAG_SETUP.md Step 6."
+                "Xem docs/rag-setup.md Step 6."
             )
         self._headers = {
             "Authorization": f"Bearer {self.api_key}",
