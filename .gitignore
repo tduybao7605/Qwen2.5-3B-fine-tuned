@@ -23,3 +23,6 @@ cadebot-merged/
 # Báo cáo tự sinh
 PIPELINE_ANALYSIS.html
 PIPELINE_ANALYSIS_files/
+
+# Agent config and logs (chứa transcript, có thể lẫn secret)
+.claude/

@@ -40,8 +40,13 @@ POST https://api.groq.com/openai/v1/audio/transcriptions
 
 ### Authentication
 ```
-Authorization: Bearer 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
+Authorization: Bearer $GROQ_API_KEY
 ```
+
+> Key lấy từ `groq.api.key` trong `Cadebot_UI/local.properties` (đã gitignore),
+> inject vào `BuildConfig.GROQ_API_KEY` lúc build. **Không bao giờ dán key thật
+> vào tài liệu** — bản trước của file này từng làm vậy và key đó phải coi như
+> đã lộ.
 
 ### Request (multipart/form-data)
 | Field | Value | Ghi chú |
