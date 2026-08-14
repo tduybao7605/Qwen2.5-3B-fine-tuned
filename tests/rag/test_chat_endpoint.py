@@ -20,8 +20,9 @@ class FakeRetriever:
         self.result = result
         self.calls = []
 
-    def retrieve(self, query):
+    def retrieve(self, query, top_k=None):
         self.calls.append(query)
+        self.top_k_seen = top_k
         return self.result
 
 
@@ -100,3 +101,15 @@ def test_health_exposes_rag_state(client):
     body = client.get("/health").json()
     assert body["rag_ready"] is False
     assert body["embedding_model"] == "bge-m3"
+
+
+def test_top_k_from_the_request_reaches_the_retriever(client):
+    """Field top_k từng được nhận rồi bỏ qua — mọi request đều dùng config.TOP_K."""
+    fake = FakeRetriever(RetrievalResult(chunks=[], in_scope=False, top_score=0.1))
+    api.retriever = fake
+
+    client.post("/retrieve", json={"query": "Viva Latte giá bao nhiêu", "top_k": 7})
+    assert fake.top_k_seen == 7
+
+    client.post("/chat", json={"message": "Viva Latte giá bao nhiêu", "top_k": 5})
+    assert fake.top_k_seen == 5

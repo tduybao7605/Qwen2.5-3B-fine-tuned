@@ -58,7 +58,8 @@ class Retriever:
         self.threshold = config.SCORE_THRESHOLD if threshold is None else threshold
         self.top_k = top_k or config.TOP_K
 
-    def retrieve(self, query: str) -> RetrievalResult:
+    def retrieve(self, query: str, top_k: int | None = None) -> RetrievalResult:
+        """top_k truyền vào chỉ áp cho lần gọi này; bỏ trống thì dùng self.top_k."""
         payload = {
             "query": query,
             "retrieval_model": {
@@ -66,7 +67,7 @@ class Retriever:
                 "reranking_enable": False,
                 "reranking_model": None,
                 "weights": None,
-                "top_k": self.top_k,
+                "top_k": top_k or self.top_k,
                 # Lọc ngưỡng ở phía ta, không nhờ Dify — để log được điểm thật
                 "score_threshold_enabled": False,
                 "score_threshold": None,

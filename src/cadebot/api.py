@@ -148,7 +148,7 @@ async def chat(req: ChatRequest):
     context_block = ""
 
     if req.use_rag and retriever is not None:
-        retrieval = retriever.retrieve(req.message)
+        retrieval = retriever.retrieve(req.message, req.top_k)
         if not retrieval.in_scope:
             # CHẶN CỨNG: không gọi LLM. Tiết kiệm ~78s và loại bỏ nguy cơ bịa.
             return {
@@ -210,7 +210,7 @@ async def retrieve_only(req: RetrieveRequest):
     """Xem retrieval trả về gì mà không tốn 78s chạy LLM."""
     if retriever is None:
         return {"error": "RAG chưa được cấu hình"}
-    result = retriever.retrieve(req.query)
+    result = retriever.retrieve(req.query, req.top_k)
     return {
         "in_scope": result.in_scope,
         "top_score": result.top_score,

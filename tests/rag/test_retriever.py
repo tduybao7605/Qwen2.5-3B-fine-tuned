@@ -76,3 +76,23 @@ def test_context_text_is_truncated_to_budget():
     with patch("cadebot.rag.retriever.requests.post", return_value=_fake_response([long_chunk])):
         result = Retriever(threshold=0.55).retrieve("q")
     assert len(result.context_text) <= 2100  # MAX_CONTEXT_CHARS + nhãn
+
+
+def _captured_payload(mock_post):
+    """Lấy body JSON mà retriever đã thực sự gửi lên Dify."""
+    return mock_post.call_args.kwargs["json"]
+
+
+def test_per_request_top_k_overrides_the_default():
+    """top_k truyền vào retrieve() phải tới được Dify, không bị config nuốt mất."""
+    with patch("cadebot.rag.retriever.requests.post",
+               return_value=_fake_response([])) as post:
+        Retriever(top_k=3).retrieve("Viva Latte giá bao nhiêu", top_k=7)
+    assert _captured_payload(post)["retrieval_model"]["top_k"] == 7
+
+
+def test_omitting_top_k_falls_back_to_the_instance_default():
+    with patch("cadebot.rag.retriever.requests.post",
+               return_value=_fake_response([])) as post:
+        Retriever(top_k=3).retrieve("Viva Latte giá bao nhiêu")
+    assert _captured_payload(post)["retrieval_model"]["top_k"] == 3
