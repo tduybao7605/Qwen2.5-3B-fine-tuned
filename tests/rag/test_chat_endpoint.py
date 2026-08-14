@@ -43,9 +43,7 @@ def test_out_of_scope_returns_fallback_without_touching_llm(client):
     fake = FakeRetriever(RetrievalResult(chunks=[], in_scope=False, top_score=0.21))
     api.retriever = fake
 
-    resp = client.post(
-        "/chat", json={"message": "hôm nay trời có mưa không", "use_rag": True}
-    )
+    resp = client.post("/chat", json={"message": "hôm nay trời có mưa không"})
 
     assert resp.status_code == 200
     body = resp.json()
@@ -64,24 +62,23 @@ def test_android_payload_shape_still_works(client):
     api.retriever = FakeRetriever(
         RetrievalResult(chunks=[], in_scope=False, top_score=0.1)
     )
-    resp = client.post(
-        "/chat", json={"message": "giá vàng hôm nay", "history": [], "use_rag": True}
-    )
+    resp = client.post("/chat", json={"message": "giá vàng hôm nay", "history": []})
     assert resp.status_code == 200
     # `response` phải luôn là chuỗi JSON đúng schema cũ
     assert isinstance(resp.json()["response"], str)
     json.loads(resp.json()["response"])
 
 
-def test_use_rag_defaults_off_for_android_payload():
-    """Android không gửi use_rag. Từ 2026-08-04 mặc định là TẮT: có RAG mất
-    ~190s, vượt giới hạn 100s của Cloudflare edge proxy (lỗi 524).
+def test_use_rag_defaults_on_for_android_payload():
+    """Android không gửi use_rag, nên mặc định quyết định luôn hành vi thật.
 
-    Đánh đổi được ghi lại ở đây cho rõ: với mặc định này client KHÔNG được
-    hưởng chặn cứng out-of-scope — muốn có thì phải gửi use_rag=true.
+    Phải là BẬT: tắt RAG nghĩa là model trả lời bằng trí nhớ fine-tune — bịa
+    giá, bịa khuyến mãi, và không còn chặn cứng câu ngoài phạm vi. Deployment
+    nào bị chặn bởi timeout của proxy thì tự gửi use_rag=false, đừng hạ mặc
+    định của cả hệ thống xuống. Xem docs/deployment.md.
     """
     req = api.ChatRequest(message="giá vàng hôm nay", history=[])
-    assert req.use_rag is False
+    assert req.use_rag is True
 
 
 def test_retrieve_endpoint_reports_scores(client):

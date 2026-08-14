@@ -95,9 +95,11 @@ class HistoryItem(BaseModel):
 class ChatRequest(BaseModel):
     message: str
     history: List[HistoryItem] = []
-    # Tắt mặc định 2026-08-04: có RAG mất ~190s, vượt giới hạn 100s của
-    # Cloudflare edge proxy (lỗi 524). Không RAG còn ~95s, qua được ngưỡng.
-    use_rag: bool = False          # optional — Android không gửi field này
+    # Bật mặc định trở lại 2026-08-14. Tắt RAG (2026-08-04) có né được lỗi 524
+    # của Cloudflare, nhưng cái giá là mất grounding: model trả lời bằng trí nhớ
+    # fine-tune, bịa giá và khuyến mãi, và không còn chặn cứng câu ngoài phạm vi.
+    # Đúng sai quan trọng hơn nhanh chậm — xem docs/deployment.md về giới hạn 100s.
+    use_rag: bool = True           # optional — Android không gửi field này
     top_k: int | None = None      # optional — để debug
 
 
