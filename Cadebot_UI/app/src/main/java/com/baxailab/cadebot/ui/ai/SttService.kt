@@ -13,7 +13,7 @@ import org.json.JSONObject
 import java.io.File
 import java.util.concurrent.TimeUnit
 
-class GroqSttService(private val context: Context) {
+class SttService(private val context: Context) {
     private var mediaRecorder: MediaRecorder? = null
     private var audioFile: File? = null
 
@@ -47,7 +47,8 @@ class GroqSttService(private val context: Context) {
         mediaRecorder = null
     }
 
-    // Gọi PhoWhisper-large trên laptop thay vì Groq API
+    // Ghi âm xong đẩy thẳng lên /stt của Cadebot API — PhoWhisper-large chạy ở
+    // đó. Không dùng dịch vụ STT bên ngoài nên app không cần API key nào.
     suspend fun transcribe(serverUrl: String): String? = withContext(Dispatchers.IO) {
         val file = audioFile?.takeIf { it.exists() && it.length() > 0 } ?: return@withContext null
 

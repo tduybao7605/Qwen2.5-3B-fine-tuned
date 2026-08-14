@@ -58,7 +58,7 @@ fun AiScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    val sttService = remember { GroqSttService(context) }
+    val sttService = remember { SttService(context) }
     DisposableEffect(sttService) {
         onDispose { sttService.release() }
     }
