@@ -385,6 +385,13 @@ Chạy đồng thời cả 2 model:
 
 ## 6. Giải pháp Cloud/API để đạt ≤ 3 giây (không cần tự mua GPU)
 
+> ⚠️ **KHẢO SÁT PHƯƠNG ÁN — KHÔNG PHẢI KIẾN TRÚC ĐANG CHẠY.**
+> Mục này so sánh các hướng nâng cấp *đã cân nhắc và chưa chọn*. Hệ thống thật
+> tự host toàn bộ: STT bằng PhoWhisper-large và LLM bằng Qwen2.5-3B + LoRA, đều
+> chạy trong `cadebot-api`, không gọi dịch vụ AI bên thứ ba nào. Mọi cái tên nhà
+> cung cấp dưới đây (Groq, RunPod, GPT-4o-mini, Gemini…) chỉ là đối tượng so
+> sánh trên giấy. Kiến trúc thật xem [architecture.md](architecture.md).
+
 > Cả 3 hướng đều rất rẻ vì dùng **serverless** — chỉ tính tiền khi có request, không tốn tiền lúc quán đóng cửa.
 
 ### Hướng 1 — Groq STT + Serverless GPU cho LLM

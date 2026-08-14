@@ -1,0 +1,85 @@
+name: Bug report
+description: Something does not work as documented
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing: check the troubleshooting table in
+        [docs/deployment.md](https://github.com/tduybao7605/Qwen2.5-3B-fine-tuned/blob/main/docs/deployment.md#troubleshooting).
+        It covers the Dify network, the Dataset API key, HTTP 524 and first-boot weight downloads.
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Which part of the system is affected?
+      options:
+        - API server
+        - RAG / retrieval
+        - STT
+        - Model / fine-tuning
+        - Android client
+        - Docker / deployment
+        - Docs
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: Include the exact error message or response body.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected instead
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Exact commands, including the request body if an endpoint is involved.
+      placeholder: |
+        1. make up
+        2. curl -s -X POST localhost:8000/chat -H 'Content-Type: application/json' -d '{"message":"..."}'
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: health
+    attributes:
+      label: Output of `curl -s localhost:8000/health`
+      description: This answers most deployment questions immediately.
+      render: json
+    validations:
+      required: false
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: How it runs (Docker or local), Python version, OS, CPU-only or GPU.
+      placeholder: |
+        Run mode: docker compose / python3 -m cadebot
+        Python: 3.12.x
+        OS: Ubuntu 22.04
+        GPU: none
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: From `make logs`. Redact any keys before pasting.
+      render: shell
+    validations:
+      required: false

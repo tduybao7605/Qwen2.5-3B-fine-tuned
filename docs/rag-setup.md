@@ -1,6 +1,6 @@
 # Cadebot RAG — Hướng dẫn dựng hạ tầng
 
-Dify self-hosted + Qdrant + BGE-M3 (qua Ollama) cho `serve_model.py`.
+Dify self-hosted + Qdrant + BGE-M3 (qua Ollama) cho `src/cadebot/`.
 Plan gốc: `docs/superpowers/plans/2026-07-29-bge-m3-rag-dify.md`.
 
 ## Cấu hình đã chốt
@@ -214,7 +214,7 @@ python3 scripts/sync_kb.py             # chạy lại: vẫn ĐÚNG 2 document, 
 python3 scripts/calibrate_threshold.py
 ```
 
-Cập nhật `SCORE_THRESHOLD` trong `rag/config.py` bằng con số script đề xuất.
+Cập nhật `SCORE_THRESHOLD` trong `src/cadebot/rag/config.py` bằng con số script đề xuất.
 **Đã đo 2026-07-29 → 0.51** (xem mục "Kết quả đánh giá" cuối file).
 
 Nếu hai phân phối in-scope/out-of-scope chồng nhau: `hybrid_search` **đã thử và
@@ -225,7 +225,7 @@ không giúp gì** (xem ghi chú 2 ở cuối). Đường còn lại là thêm r
 
 ```bash
 set -a && source .env && set +a
-python3 serve_model.py
+python3 -m cadebot
 curl -s localhost:8000/health | python3 -m json.tool   # rag_ready: true
 python3 scripts/eval_rag.py --fast                      # out-of-scope phải chặn 15/15
 ```

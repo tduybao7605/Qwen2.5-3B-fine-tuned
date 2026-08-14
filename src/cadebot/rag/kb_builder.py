@@ -13,6 +13,6 @@ def build_document(chunks: list[Chunk]) -> str:
         if any(ln.strip() == sep_line for ln in rendered.splitlines()):
             raise ValueError(
                 f"Chunk {c.id} chứa dòng {sep_line!r} — Dify sẽ cắt nhầm và "
-                "segment kế tiếp mất dòng [chunk_id]. Lọc nó ở rag/chunker.py."
+                "segment kế tiếp mất dòng [chunk_id]. Lọc nó ở cadebot/rag/chunker.py."
             )
     return config.CHUNK_SEPARATOR.join(c.render() for c in chunks)

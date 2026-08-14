@@ -1,6 +1,6 @@
 """Đánh giá end-to-end: out-of-scope có bị chặn không, in-scope có trích nguồn không.
 
-    python3 scripts/eval_rag.py            # cần serve_model.py đang chạy
+    python3 scripts/eval_rag.py            # cần server đang chạy (python3 -m cadebot)
     python3 scripts/eval_rag.py --fast     # chỉ /retrieve, bỏ qua LLM
 """
 import argparse

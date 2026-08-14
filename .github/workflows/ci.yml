@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: Tests (Python 3.12)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false   # the LoRA adapter is not needed to run the test suite
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # CPU-only torch, the same way the Dockerfile does it — the default
+          # PyPI wheel drags in ~3 GB of CUDA libraries the runner never uses.
+          pip install torch==2.10.0 --index-url https://download.pytorch.org/whl/cpu
+          pip install -r requirements.txt
+
+      - name: Run tests
+        run: python -m pytest tests/ -q
+
+  secrets-scan:
+    name: No secrets or absolute paths
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - name: Grep for forbidden strings
+        run: |
+          # cadebot-lora/adapter_config.json records the base-model path baked in
+          # at training time and dataset/*.jsonl are tokenizer artifacts — both are
+          # data, not documentation, so they are excluded. `xxxxxxxx` placeholders
+          # in .env.example are filtered out rather than exempting the whole file.
+          hits=$(git grep -nIE '/home/[a-z0-9_-]+/|dataset-[A-Za-z0-9]{20,}|gsk_[A-Za-z0-9]{20,}' \
+                   -- . ':!cadebot-lora' ':!dataset' ':!docs/superpowers' \
+                 | grep -v 'xxxxxxxx' || true)
+          if [ -n "$hits" ]; then
+            echo "$hits"
+            echo "::error::Found an absolute home path or a leaked key above."
+            exit 1
+          fi
+          echo "clean"

@@ -1,111 +1,116 @@
-# Cadebot — Tài liệu Tích hợp STT & Model API
+# Cadebot — Android client
 
-## Tổng quan những gì đã thêm
+App Android (Jetpack Compose) cho tablet đặt tại bàn. Ghi âm, gửi lên Cadebot
+API để nhận dạng và trả lời, rồi đọc câu trả lời bằng TTS của Android.
 
-### 1. Groq Whisper STT (Speech-to-Text)
-Thay thế Android built-in `SpeechRecognizer` bằng Groq Whisper API.  
-Flow: **Ghi âm (MediaRecorder) → gửi file âm thanh → Groq trả text → điền vào input.**
+**Kiến trúc: chỉ một backend.** Cả speech-to-text lẫn hội thoại đều gọi về
+Cadebot API tự host. App **không** dùng dịch vụ AI bên thứ ba nào và **không
+cần API key nào**.
 
-### 2. Kết nối Model thật trên Laptop
-Thay thế `MockAiService` bằng `CadebotApiService` gọi HTTP đến server FastAPI chạy model Qwen2.5-3B + LoRA.
+```
+[User nói vào mic]
+       ↓
+[MediaRecorder ghi âm → file .m4a (AAC, 16kHz)]
+       ↓  POST /stt   (multipart)
+[Cadebot API — PhoWhisper-large]
+       ↓
+[Text tiếng Việt điền vào ô nhập]
+       ↓  (User nhấn Send)   POST /chat
+[Cadebot API — retrieval (Dify+Qdrant) → Qwen2.5-3B + LoRA]
+       ↓
+[JSON: intent, answerText, spokenText, recommendedItems, sourceIds]
+       ↓
+[Hiển thị chat bubble + gợi ý món, đọc spokenText bằng TextToSpeech]
+```
 
-### 3. FastAPI Server (serve_model.py)
-Script chạy model trên laptop, expose endpoint `/chat` cho app Android gọi tới.
+Toàn bộ lưu lượng đi tới một địa chỉ duy nhất: `BuildConfig.CADEBOT_API_URL`.
 
 ---
 
-## Các file đã thay đổi / tạo mới
+## Các file chính
 
-| File | Loại | Mô tả |
-|------|------|--------|
-| `Cadebot_UI/app/src/main/AndroidManifest.xml` | Sửa | Thêm `RECORD_AUDIO`, `INTERNET` permission |
-| `Cadebot_UI/gradle/libs.versions.toml` | Sửa | Thêm OkHttp `4.12.0` |
-| `Cadebot_UI/app/build.gradle.kts` | Sửa | Bật `buildConfig`, đọc `local.properties`, thêm OkHttp dep |
-| `Cadebot_UI/local.properties` | Sửa | Thêm `groq.api.key` và `cadebot.api.url` |
-| `data/remote/CadebotApiService.kt` | **Mới** | HTTP client gọi model server |
-| `ui/ai/GroqSttService.kt` | **Mới** | Ghi âm + gọi Groq Whisper API |
-| `di/AppModule.kt` | Sửa | Provide `CadebotApiService` thay `MockAiService` |
-| `ui/ai/AiViewModel.kt` | Sửa | Dùng `CadebotApiService`, thêm state `isListening`/`isTranscribing` |
-| `ui/ai/AiScreen.kt` | Sửa | Tích hợp `GroqSttService`, 3 trạng thái mic UI |
-| `serve_model.py` | **Mới** | FastAPI server chạy model Qwen2.5-3B + LoRA |
+| File | Vai trò |
+|------|---------|
+| `ui/ai/SttService.kt` | Ghi âm bằng `MediaRecorder`, POST file lên `/stt`, trả text |
+| `data/remote/CadebotApiService.kt` | HTTP client gọi `/chat`, parse JSON của model |
+| `ui/ai/AiScreen.kt` | Màn hình hội thoại, 3 trạng thái mic, phát TTS |
+| `ui/ai/AiViewModel.kt` | State `isListening` / `isTranscribing`, gọi `CadebotApiService` |
+| `di/AppModule.kt` | Provide `CadebotApiService` thay cho `MockAiService` |
+| `app/build.gradle.kts` | Bật `buildConfig`, đọc `cadebot.api.url` từ `local.properties` |
+| `AndroidManifest.xml` | Quyền `RECORD_AUDIO`, `INTERNET` |
 
 ---
 
-## API 1 — Groq Whisper (Speech-to-Text)
+## Cấu hình
 
-### Endpoint
-```
-POST https://api.groq.com/openai/v1/audio/transcriptions
-```
+Chỉ có **một** giá trị cần đặt.
 
-### Authentication
-```
-Authorization: Bearer $GROQ_API_KEY
+```bash
+cd Cadebot_UI
+cp local.properties.example local.properties
 ```
 
-> Key lấy từ `groq.api.key` trong `Cadebot_UI/local.properties` (đã gitignore),
-> inject vào `BuildConfig.GROQ_API_KEY` lúc build. **Không bao giờ dán key thật
-> vào tài liệu** — bản trước của file này từng làm vậy và key đó phải coi như
-> đã lộ.
+Sửa `cadebot.api.url` cho đúng nơi server đang chạy:
 
-### Request (multipart/form-data)
-| Field | Value | Ghi chú |
-|-------|-------|---------|
-| `file` | file âm thanh `.m4a` | Ghi bởi `MediaRecorder` (AAC, 16kHz, 64kbps) |
-| `model` | `whisper-large-v3-turbo` | Model Whisper nhanh nhất của Groq |
-| `language` | `vi` | Tiếng Việt |
-| `response_format` | `json` | Trả JSON |
+| Tình huống | Giá trị |
+|---|---|
+| Android emulator, server trên cùng máy | `http://10.0.2.2:8000` |
+| Thiết bị thật, cùng mạng LAN | `http://192.168.1.x:8000` |
+| Server đã expose qua tunnel / reverse proxy | `https://your-domain.example` |
 
-### Response
+Lấy IP LAN của máy chạy server:
+
+```bash
+ip addr show | grep "inet " | grep -v 127.0.0.1   # Linux/macOS
+ipconfig                                           # Windows
+```
+
+`local.properties` nằm trong `.gitignore` — không commit file này.
+
+---
+
+## Build APK
+
+```bash
+cd Cadebot_UI
+./gradlew assembleDebug
+# APK: app/build/outputs/apk/debug/app-debug.apk
+```
+
+Hoặc bằng Android Studio: mở thư mục `Cadebot_UI/`, đợi Gradle sync, rồi
+**Build → Build Bundle(s) / APK(s) → Build APK(s)**.
+
+> Nếu dùng IP LAN thì điện thoại và máy chủ phải cùng mạng WiFi.
+
+Server phải đang chạy trước khi mở app — xem [deployment.md](deployment.md).
+
+---
+
+## API mà app gọi
+
+Hợp đồng đầy đủ ở [api-reference.md](api-reference.md); dưới đây là phần app
+thực sự dùng.
+
+### `POST /stt` — Speech-to-Text
+
+Multipart, field `file` là bản ghi `.m4a`. Server dùng `ffmpeg` chuyển sang WAV
+16 kHz mono rồi đưa qua PhoWhisper-large.
+
 ```json
-{
-  "text": "nội dung người dùng đã nói"
-}
+{ "text": "nội dung người dùng đã nói" }
 ```
 
-### Code tham chiếu
-`GroqSttService.kt` → hàm `suspend fun transcribe(apiKey: String): String?`
+Code: `SttService.kt` → `suspend fun transcribe(serverUrl: String): String?`
 
 ```kotlin
-// Ghi âm
-sttService.startRecording()          // bắt đầu ghi
-
-// Dừng và gửi Groq
+sttService.startRecording()
+// ...
 sttService.stopRecording()
-val text = sttService.transcribe(BuildConfig.GROQ_API_KEY)
+val text = sttService.transcribe(BuildConfig.CADEBOT_API_URL)
 ```
 
----
+### `POST /chat` — Hội thoại
 
-## API 2 — Cadebot Model Server (trên Laptop)
-
-### Setup server
-```bash
-pip install fastapi uvicorn transformers peft torch accelerate
-python serve_model.py
-```
-
-Server chạy tại `http://0.0.0.0:8000`.
-
-### Endpoints
-
-#### `GET /health`
-Kiểm tra server còn sống không.
-
-**Response:**
-```json
-{
-  "status": "ok",
-  "model_loaded": true
-}
-```
-
----
-
-#### `POST /chat`
-Gửi tin nhắn, nhận phản hồi từ model Qwen2.5-3B + LoRA.
-
-**Request body:**
 ```json
 {
   "message": "Latte có caffeine không?",
@@ -118,120 +123,70 @@ Gửi tin nhắn, nhận phản hồi từ model Qwen2.5-3B + LoRA.
 
 | Field | Type | Mô tả |
 |-------|------|--------|
-| `message` | `string` | Tin nhắn hiện tại của người dùng |
-| `history` | `array` | Lịch sử hội thoại (tối đa 8 messages gần nhất được dùng) |
+| `message` | `string` | Tin nhắn hiện tại |
+| `history` | `array` | Lịch sử hội thoại (server chỉ dùng 8 lượt gần nhất) |
+| `use_rag` | `bool` | Không bắt buộc. App không gửi → server mặc định **bật** |
 
 **Response:**
+
 ```json
 {
-  "response": "{\"intent\":\"MENU_QA\",\"confidence\":0.95,\"answerText\":\"Latte có caffeine vì được pha từ espresso...\",\"recommendedItems\":[{\"menuItemId\":\"VR_LATTE\",\"reason\":\"...\"}],...}"
+  "response": "{\"intent\":\"MENU_QA\",\"answerText\":\"...\",\"sourceIds\":[\"menu:VR_LATTE\"]}",
+  "retrieval": { "in_scope": true, "top_score": 0.71, "threshold": 0.51, "sourceIds": ["menu:VR_LATTE"] }
 }
 ```
 
-> **Lưu ý:** `response` là chuỗi JSON do model sinh ra.  
-> Android app parse lại để lấy `answerText` và `recommendedItems`.
+> **Lưu ý:** `response` là **chuỗi** chứa JSON, không phải object lồng nhau.
+> App phải `JSONObject(...)` lần nữa để lấy `answerText` / `recommendedItems`.
 
-### Cấu trúc JSON mà model trả về (bên trong `response`)
+### Cấu trúc JSON bên trong `response`
+
 ```json
 {
   "intent": "MENU_QA | RECOMMENDATION | ADD_TO_CART_DRAFT | PROMOTION_QA | CALL_STAFF | FALLBACK",
   "confidence": 0.95,
   "answerText": "Câu trả lời hiển thị trong chat",
   "spokenText": "Câu trả lời ngắn hơn cho TTS",
-  "recommendedItems": [
-    { "menuItemId": "VR_LATTE", "reason": "Lý do gợi ý" }
-  ],
+  "recommendedItems": [{ "menuItemId": "VR_LATTE", "reason": "Lý do gợi ý" }],
   "draftCartItems": [],
   "requiresHumanSupport": false,
   "sourceIds": ["menu:VR_LATTE"]
 }
 ```
 
-### Code tham chiếu
-`CadebotApiService.kt` → hàm `suspend fun processQuery(message, history): AiMessage`
+Câu ngoài phạm vi kiến thức trả `intent: "FALLBACK"` với `sourceIds: []` — server
+chặn trước khi gọi LLM, nên về rất nhanh (~0.1 s).
+
+Code: `CadebotApiService.kt` → `suspend fun processQuery(message, history): AiMessage`
 
 ---
 
-## Cách cấu hình và Build APK
-
-### Bước 1 — Lấy IP của laptop
-```bash
-# Linux/Mac
-ip addr show | grep "inet " | grep -v 127.0.0.1
-
-# Windows
-ipconfig
-```
-Ví dụ IP: `192.168.1.105`
-
-### Bước 2 — Cập nhật local.properties
-Mở file `Cadebot_UI/local.properties`, sửa dòng:
-```
-cadebot.api.url=http://192.168.1.105:8000
-```
-Thay `192.168.1.105` bằng IP thật của laptop.
-
-### Bước 3 — Chạy server trên laptop
-```bash
-cd /path/to/Qwen2.5-3B-fine-tuned
-pip install fastapi uvicorn transformers peft torch accelerate
-python serve_model.py
-```
-Đợi đến khi thấy: `✅ Model ready!`
-
-### Bước 4 — Build APK bằng Android Studio
-1. Mở Android Studio
-2. File → Open → chọn thư mục `Cadebot_UI/`
-3. Đợi Gradle sync
-4. Menu: **Build → Build Bundle(s) / APK(s) → Build APK(s)**
-5. APK xuất tại: `app/build/outputs/apk/debug/app-debug.apk`
-
-> **Yêu cầu:** Điện thoại và laptop phải cùng mạng WiFi để app kết nối được server.
-
----
-
-## Luồng hoạt động toàn bộ
-
-```
-[User nói vào mic]
-       ↓
-[Android MediaRecorder ghi âm → file .m4a]
-       ↓
-[GroqSttService gửi lên Groq Whisper API]
-       ↓  POST /audio/transcriptions
-[Groq trả về text tiếng Việt]
-       ↓
-[Text điền vào input field]
-       ↓  (User nhấn Send)
-[CadebotApiService POST /chat đến Laptop Server]
-       ↓
-[FastAPI → Qwen2.5-3B + LoRA inference]
-       ↓
-[Model trả JSON có answerText + recommendedItems]
-       ↓
-[Android parse JSON → hiển thị chat bubble + gợi ý món]
-```
-
----
-
-## Các thư viện / dependencies đã thêm
+## Dependencies đã thêm
 
 | Library | Version | Mục đích |
 |---------|---------|----------|
-| `com.squareup.okhttp3:okhttp` | `4.12.0` | HTTP client cho Groq API và model server |
+| `com.squareup.okhttp3:okhttp` | `4.12.0` | HTTP client gọi Cadebot API |
 | `android.permission.RECORD_AUDIO` | built-in | Quyền ghi âm |
 | `android.permission.INTERNET` | built-in | Quyền gọi API |
-| `android.media.MediaRecorder` | built-in Android | Ghi âm thành file .m4a |
-| `org.json.JSONObject` | built-in Android | Parse JSON response từ model |
+| `android.media.MediaRecorder` | built-in | Ghi âm ra `.m4a` |
+| `android.speech.tts.TextToSpeech` | built-in | Đọc `spokenText` |
+| `org.json.JSONObject` | built-in | Parse response |
 
 ---
 
 ## Lưu ý bảo mật
 
-- `local.properties` đã có trong `.gitignore` → API key **không bị commit lên git**
-- API key được inject vào `BuildConfig` lúc build → không hardcode trong source
-- Nên dùng biến môi trường hoặc Android Keystore cho production
+- App không giữ credential nào — không có API key để lộ.
+- `/chat` phía server hiện **không xác thực** và CORS để `*`. Chấp nhận được cho
+  demo sau tên miền riêng tư; xem phần security notes trong
+  [deployment.md](deployment.md).
+- `local.properties` đã gitignore. Đừng commit nó, kể cả khi chỉ chứa URL.
 
 ---
 
-*Tài liệu này được tạo tự động sau khi tích hợp Groq STT và Cadebot Model API.*
+## Lịch sử
+
+Bản đầu dùng **Groq Whisper API** cho STT. Đã bỏ hoàn toàn: STT chuyển sang
+PhoWhisper-large chạy trên chính Cadebot API, nên app còn đúng một backend và
+không cần API key. Nếu gặp tàn dư nào còn nhắc `groq` trong code hay tài liệu
+thì đó là sót, hãy xoá.

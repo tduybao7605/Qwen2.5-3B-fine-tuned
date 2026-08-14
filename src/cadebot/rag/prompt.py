@@ -9,7 +9,7 @@ FALLBACK_TEXT = (
 
 
 def fallback_response() -> dict:
-    """Trả về ĐÚNG schema JSON mà SYSTEM_PROMPT quy định (serve_model.py)."""
+    """Trả về ĐÚNG schema JSON mà SYSTEM_PROMPT quy định (cadebot/api.py)."""
     return {
         "intent": "FALLBACK",
         "confidence": 1.0,

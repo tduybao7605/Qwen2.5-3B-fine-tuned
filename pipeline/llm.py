@@ -2,7 +2,7 @@
 
 Trước đây file này POST tới Ollama /api/chat với model cadebot-viva, không gửi
 system prompt, không gửi history, không có context — tức là bỏ qua hoàn toàn
-knowledge base. Nay đi qua serve_model.py để đường giọng nói dùng chung một
+knowledge base. Nay đi qua Cadebot API để đường giọng nói dùng chung một
 lớp RAG với client Android (cùng ngưỡng, cùng logic chặn out-of-scope).
 """
 import json

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Deployment questions
+    url: https://github.com/tduybao7605/Qwen2.5-3B-fine-tuned/blob/main/docs/deployment.md
+    about: Check the deployment guide and its troubleshooting table first.
+  - name: Setup guide
+    url: https://github.com/tduybao7605/Qwen2.5-3B-fine-tuned/blob/main/README.md
+    about: Step-by-step setup from a clean machine, with the expected output of each step.
