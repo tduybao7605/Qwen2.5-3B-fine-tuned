@@ -93,7 +93,7 @@ free -g | head -2
 
 Ghi lại output. Trên máy dev hiện tại kết quả là: torch `2.10.0+cpu`, cuda `False`, transformers `5.12.1`, peft `0.19.1`, numpy `1.26.4`, RAM 23 GB.
 
-**Lưu ý có 2 interpreter khác nhau trên máy này** — `python3` mặc định (torch 2.10.0+cpu, numpy 1.26.4) và `/home/ncd/.pyenv/versions/3.11.8/bin/python3` (torch 2.12.0, numpy 2.3.0). Chốt **một** interpreter cho toàn bộ dự án và ghi vào `requirements.txt`. Nếu output khác các số trên, cập nhật pin ở Step 2 cho khớp — **không** ép cài đè phiên bản torch đang chạy được.
+**Lưu ý có 2 interpreter khác nhau trên máy này** — `python3` mặc định (torch 2.10.0+cpu, numpy 1.26.4) và `$PYENV_ROOT/versions/3.11.8/bin/python3` (torch 2.12.0, numpy 2.3.0). Chốt **một** interpreter cho toàn bộ dự án và ghi vào `requirements.txt`. Nếu output khác các số trên, cập nhật pin ở Step 2 cho khớp — **không** ép cài đè phiên bản torch đang chạy được.
 
 - [ ] **Step 2: Tạo `requirements.txt`**
 
@@ -693,9 +693,9 @@ Description=Ollama docker0 bridge for Dify
 After=network.target ollama.service
 
 [Service]
-ExecStart=/usr/bin/python3 /home/ncd/learnspaces/Qwen2.5-3B-fine-tuned/knowledge_base/ollama_docker_bridge.py
+ExecStart=/usr/bin/python3 $REPO_ROOT/knowledge_base/ollama_docker_bridge.py
 Restart=always
-User=ncd
+User=<your-user>
 
 [Install]
 WantedBy=multi-user.target

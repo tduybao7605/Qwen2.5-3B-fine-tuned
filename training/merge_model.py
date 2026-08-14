@@ -1,10 +1,13 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
+from pathlib import Path
+import os
 import torch
 
-BASE = "/home/team3/hrc2026-team3/qwen2.5-3b-base"
-LORA = "/home/team3/Qwen2.5-3B-fine-tuned/cadebot-lora"
-OUT  = "/home/team3/Qwen2.5-3B-fine-tuned/cadebot-merged"
+ROOT = Path(__file__).resolve().parent.parent
+BASE = os.getenv("CADEBOT_BASE_MODEL", "Qwen/Qwen2.5-3B-Instruct")
+LORA = os.getenv("CADEBOT_MODEL_DIR", str(ROOT / "cadebot-lora"))
+OUT  = str(ROOT / "cadebot-merged")
 
 print("Loading base model...")
 base = AutoModelForCausalLM.from_pretrained(

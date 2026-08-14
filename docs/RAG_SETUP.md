@@ -119,9 +119,9 @@ Description=Ollama docker0 bridge for Dify
 After=network.target ollama.service
 
 [Service]
-ExecStart=/usr/bin/python3 /home/ncd/learnspaces/Qwen2.5-3B-fine-tuned/knowledge_base/ollama_docker_bridge.py
+ExecStart=/usr/bin/python3 $REPO_ROOT/knowledge_base/ollama_docker_bridge.py
 Restart=always
-User=ncd
+User=<your-user>
 
 [Install]
 WantedBy=multi-user.target

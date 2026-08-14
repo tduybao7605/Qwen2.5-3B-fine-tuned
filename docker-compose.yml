@@ -6,17 +6,18 @@ services:
     env_file:
       - .env
     environment:
-      # Trong network của Dify, gọi bằng tên service "nginx" thay vì
-      # "localhost" (localhost trong container là chính nó, không phải host).
+      # Inside Dify's network, address it by the service name "nginx" rather
+      # than "localhost" — in a container, localhost is the container itself,
+      # not the host. This overrides DIFY_BASE_URL from .env.
       DIFY_BASE_URL: http://nginx/v1
     ports:
-      # Host port 8000 -> đây là port cloudflared trỏ tới.
+      # Host port 8000 — this is what the Cloudflare Tunnel points at.
       - "8000:8000"
     volumes:
-      # Model + LoRA — không bake vào image, mount từ repo.
+      # Model + LoRA adapter — never baked into the image, mounted from the repo.
       - ./cadebot-lora:/app/cadebot-lora:ro
-      # Cache HuggingFace (base Qwen2.5-3B + PhoWhisper-large) — tải 1 lần,
-      # dùng lại giữa các lần rebuild/restart container.
+      # HuggingFace cache (Qwen2.5-3B base + PhoWhisper-large) — downloaded once,
+      # reused across rebuilds and restarts. `make clean` destroys it.
       - hf_cache:/root/.cache/huggingface
     networks:
       - default
@@ -24,8 +25,9 @@ services:
 
 networks:
   default:
-  # Network của stack Dify (docker compose project "docker" ở
-  # /home/ncd/dify/docker) — phải đã chạy `docker compose up` ở đó trước.
+  # Dify's stack network (its compose project is named "docker", so the network
+  # is "docker_default"). Dify must already be up: run `docker compose up` in
+  # <path-to>/dify/docker first, or this service fails to start.
   dify_network:
     external: true
     name: docker_default

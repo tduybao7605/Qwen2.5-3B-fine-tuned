@@ -2,7 +2,12 @@
 
 > **Model:** Qwen2.5-3B-Instruct → Cadebot (LoRA)
 > **Ngày thực hiện:** 2026-06-19
-> **Script:** `finetune_cadebot.py`
+> **Script:** `training/finetune_cadebot.py`
+
+**Placeholder dùng trong tài liệu này** (đường dẫn cụ thể tuỳ máy training):
+`$REPO_ROOT` gốc repo · `$VENV` virtualenv dùng để train ·
+`$MODEL_CACHE` nơi chứa trọng số base tải sẵn ·
+`$PYTHON_INCLUDE_DIR` thư mục chứa `Python.h`.
 
 ---
 
@@ -118,7 +123,7 @@ gate_proj, up_proj, down_proj
 | VRAM tổng | 50.9 GB |
 | VRAM free khi bắt đầu | 44.5 GB |
 | Framework | PyTorch 2.7.1+cu128 |
-| Python | 3.12 (venv: `/home/team3/Isaac-GR00T/.venv`) |
+| Python | 3.12 (venv: `$VENV`) |
 | transformers | 4.57.6 |
 | peft | 0.17.1 |
 | trl | 1.6.0 |
@@ -194,7 +199,7 @@ Accuracy
 ### Vị trí lưu trữ
 
 ```
-hrc2026-team3/
+$MODEL_CACHE/
 ├── qwen2.5-3b-base/               ← Base model (5.8 GB, không thay đổi)
 │   ├── config.json
 │   ├── model-00001-of-00002.safetensors
@@ -240,7 +245,7 @@ hrc2026-team3/
 
 ```python
 import os
-os.environ["PYTHON_INCLUDE_DIR"] = "/home/team3/python_headers/python3.12"
+os.environ["PYTHON_INCLUDE_DIR"] = "$PYTHON_INCLUDE_DIR"
 
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
@@ -296,8 +301,8 @@ tokenizer.save_pretrained("./cadebot-merged")
 ### Lệnh chạy lại fine-tune
 
 ```bash
-PYTHON_INCLUDE_DIR=/home/team3/python_headers/python3.12 \
-/home/team3/Isaac-GR00T/.venv/bin/python finetune_cadebot.py
+PYTHON_INCLUDE_DIR=$PYTHON_INCLUDE_DIR \
+$VENV/bin/python finetune_cadebot.py
 ```
 
 ---
@@ -328,8 +333,8 @@ PYTHON_INCLUDE_DIR=/home/team3/python_headers/python3.12 \
 ### Script đánh giá nhanh trên val set
 
 ```bash
-PYTHON_INCLUDE_DIR=/home/team3/python_headers/python3.12 \
-/home/team3/Isaac-GR00T/.venv/bin/python - << 'EOF'
+PYTHON_INCLUDE_DIR=$PYTHON_INCLUDE_DIR \
+$VENV/bin/python - << 'EOF'
 import json, torch
 from datasets import Dataset
 from transformers import AutoModelForCausalLM, AutoTokenizer

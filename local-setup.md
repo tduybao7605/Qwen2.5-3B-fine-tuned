@@ -10,10 +10,10 @@
 ### Python
 | Thành phần | Phiên bản | Đường dẫn |
 |---|---|---|
-| Python | **3.11.8** | `/home/ncd/.pyenv/versions/3.11.8/bin/python3` |
+| Python | **3.11.8** | `$PYENV_ROOT/versions/3.11.8/bin/python3` |
 | PyTorch | 2.12.0+cu130 | CPU only (CUDA không khả dụng) |
 
-> ⚠️ Luôn chạy pipeline bằng `/home/ncd/.pyenv/versions/3.11.8/bin/python3 main.py` nếu lệnh `python3` trỏ sai phiên bản.
+> ⚠️ Luôn chạy pipeline bằng `$PYENV_ROOT/versions/3.11.8/bin/python3 main.py` nếu lệnh `python3` trỏ sai phiên bản.
 
 ### System library
 | Thư viện | Phiên bản | Lý do cài |
@@ -98,7 +98,7 @@ Tất cả nằm trong thư mục `pipeline/`:
 ### Test từng module (không cần micro)
 
 ```bash
-cd /home/ncd/learnspaces/Cadebot/pipeline
+cd $REPO_ROOT/pipeline
 
 # Kiểm tra Ollama + model cadebot-viva có sẵn
 python3 test_pipeline.py --module ollama --model cadebot-viva
@@ -151,7 +151,7 @@ curl -s http://localhost:11434/api/chat \
 
 ## 7. Lưu ý khi chạy
 
-- Nếu `python3 main.py` báo `ModuleNotFoundError` → dùng đường dẫn đầy đủ: `/home/ncd/.pyenv/versions/3.11.8/bin/python3 main.py`
+- Nếu `python3 main.py` báo `ModuleNotFoundError` → dùng đường dẫn đầy đủ: `$PYENV_ROOT/versions/3.11.8/bin/python3 main.py`
 - Nếu Ollama chưa chạy → `ollama serve` (hoặc service đã tự start khi boot)
 - Timeout LLM mặc định 60s trong `pipeline/llm.py` — đủ cho CPU inference
 - STT dùng Whisper `small` (CPU) — nhận dạng tiếng Việt mất ~1.5–3s/câu

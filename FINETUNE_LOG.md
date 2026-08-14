@@ -4,6 +4,11 @@
 > Ngày: 2026-06-19
 > Mục tiêu: Fine-tune Qwen2.5-3B-Instruct thành Cadebot — trợ lý robot phục vụ tại Viva Reserve Coffee
 
+**Placeholder dùng trong tài liệu này** (đường dẫn cụ thể tuỳ máy training):
+`$REPO_ROOT` gốc repo · `$VENV` virtualenv dùng để train ·
+`$MODEL_CACHE` nơi chứa trọng số base tải sẵn ·
+`$PYTHON_INCLUDE_DIR` thư mục chứa `Python.h`.
+
 ---
 
 ## Tóm tắt nhanh
@@ -28,7 +33,7 @@
 - Không có `conda`, không có venv riêng cho project
 
 **Giải pháp:**
-Phát hiện venv sẵn có của Isaac-GR00T tại `/home/team3/Isaac-GR00T/.venv/` đã có sẵn:
+Phát hiện một venv sẵn có trên máy training (`$VENV/`) đã có sẵn:
 - `torch 2.7.1+cu128`
 - `transformers 4.57.6`
 - `peft 0.17.1`
@@ -42,7 +47,7 @@ Phát hiện venv sẵn có của Isaac-GR00T tại `/home/team3/Isaac-GR00T/.ve
 Dùng Python của GR00T venv để tải model từ HuggingFace:
 
 ```bash
-/home/team3/Isaac-GR00T/.venv/bin/python -c "
+$VENV/bin/python -c "
 from huggingface_hub import snapshot_download
 snapshot_download(
     repo_id='Qwen/Qwen2.5-3B-Instruct',
@@ -64,7 +69,7 @@ snapshot_download(
 Dùng `uv` (có sẵn tại `~/.local/bin/uv`) để cài vào GR00T venv:
 
 ```bash
-uv pip install trl bitsandbytes --python /home/team3/Isaac-GR00T/.venv/bin/python
+uv pip install trl bitsandbytes --python $VENV/bin/python
 ```
 
 **Lý do cần 2 thư viện này:**
@@ -76,9 +81,9 @@ bitsandbytes 0.49.2 phụ thuộc vào `triton`, và `triton` cần compile CUDA
 
 **Giải pháp:** Triton đã có fallback built-in — set biến môi trường:
 ```bash
-export PYTHON_INCLUDE_DIR=/home/team3/python_headers/python3.12
+export PYTHON_INCLUDE_DIR=$PYTHON_INCLUDE_DIR
 ```
-(headers có sẵn tại `/home/team3/python_headers/python3.12/Python.h`)
+(headers có sẵn tại `$PYTHON_INCLUDE_DIR/Python.h`)
 
 ---
 
@@ -137,8 +142,8 @@ TRL 1.6 thay đổi API so với các version cũ:
 ## 5. Chạy fine-tune
 
 ```bash
-PYTHON_INCLUDE_DIR=/home/team3/python_headers/python3.12 \
-/home/team3/Isaac-GR00T/.venv/bin/python finetune_cadebot.py
+PYTHON_INCLUDE_DIR=$PYTHON_INCLUDE_DIR \
+$VENV/bin/python finetune_cadebot.py
 ```
 
 ---
@@ -205,8 +210,8 @@ tokenizer.save_pretrained("./cadebot-merged")
 
 ```bash
 # Bước 1: Đảm bảo biến môi trường
-export PYTHON_INCLUDE_DIR=/home/team3/python_headers/python3.12
-export PYTHON=/home/team3/Isaac-GR00T/.venv/bin/python
+export PYTHON_INCLUDE_DIR=$PYTHON_INCLUDE_DIR
+export PYTHON=$VENV/bin/python
 
 # Bước 2: Chạy fine-tune
 $PYTHON finetune_cadebot.py

@@ -1,41 +1,52 @@
-.PHONY: up down restart build logs ps health tunnel-status tunnel-restart tunnel-logs clean
+.PHONY: help up down restart build logs ps health tunnel-status tunnel-restart tunnel-logs clean test
+
+help: ## Show this help
+	@grep -hE '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) \
+		| awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}'
 
 # ── Cadebot API (docker compose) ─────────────────────────────────────────
-up: ## Build (nếu cần) và chạy cadebot-api ở nền
+up: ## Build if needed and run cadebot-api in the background
 	docker compose up -d --build
 
-down: ## Dừng và gỡ container cadebot-api
+down: ## Stop and remove the cadebot-api container
 	docker compose down
 
 restart: down up ## Restart cadebot-api
 
-build: ## Chỉ build lại image, không chạy
+build: ## Rebuild the image only, without starting it
 	docker compose build
 
-logs: ## Xem log cadebot-api (Ctrl+C để thoát, không dừng container)
+logs: ## Follow cadebot-api logs (Ctrl+C detaches, does not stop the container)
 	docker compose logs -f cadebot-api
 
-ps: ## Trạng thái container
+ps: ## Show container status
 	docker compose ps
 
-health: ## Gọi thử /health qua cả localhost lẫn domain public
+health: ## Probe /health locally, and at PUBLIC_URL if it is set
 	@echo "── localhost:8000 ──"
-	@curl -s http://localhost:8000/health || echo "(không phản hồi)"
+	@curl -s http://localhost:8000/health || echo "(no response)"
 	@echo ""
-	@echo "── duybao.tdbao-brian.work ──"
-	@curl -s https://duybao.tdbao-brian.work/health || echo "(không phản hồi)"
-	@echo ""
+	@if [ -n "$$PUBLIC_URL" ]; then \
+		echo "── $$PUBLIC_URL ──"; \
+		curl -s "$$PUBLIC_URL/health" || echo "(no response)"; \
+		echo ""; \
+	else \
+		echo "(set PUBLIC_URL=https://your-tunnel.example.com to also probe the public endpoint)"; \
+	fi
 
 # ── Cloudflare Tunnel (systemd) ──────────────────────────────────────────
-tunnel-status: ## Trạng thái service cloudflared
+tunnel-status: ## Show the cloudflared service status
 	systemctl status cloudflared --no-pager
 
-tunnel-restart: ## Restart tunnel (cần sudo)
+tunnel-restart: ## Restart the tunnel (needs sudo)
 	sudo systemctl restart cloudflared
 
-tunnel-logs: ## Xem log tunnel (cần sudo)
+tunnel-logs: ## Follow tunnel logs (needs sudo)
 	sudo journalctl -u cloudflared -f
 
-# ── Dọn dẹp ───────────────────────────────────────────────────────────────
-clean: down ## Dừng container + xoá luôn volume hf_cache (model sẽ phải tải lại)
+# ── Development ──────────────────────────────────────────────────────────
+test: ## Run the test suite
+	python3 -m pytest tests/ -q
+
+clean: down ## Stop the container and delete the hf_cache volume (forces a full model re-download)
 	docker compose down -v

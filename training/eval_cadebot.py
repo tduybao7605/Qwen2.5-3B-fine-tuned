@@ -1,10 +1,12 @@
-import json, torch
+import json, os, torch
+from pathlib import Path
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
 
-BASE_MODEL = "/home/team3/hrc2026-team3/qwen2.5-3b-base"
-LORA_PATH  = "/home/team3/Qwen2.5-3B-fine-tuned/cadebot-lora"
-VAL_DATA   = "/home/team3/Qwen2.5-3B-fine-tuned/dataset/val.jsonl"
+ROOT = Path(__file__).resolve().parent.parent
+BASE_MODEL = os.getenv("CADEBOT_BASE_MODEL", "Qwen/Qwen2.5-3B-Instruct")
+LORA_PATH  = os.getenv("CADEBOT_MODEL_DIR", str(ROOT / "cadebot-lora"))
+VAL_DATA   = str(ROOT / "dataset" / "val.jsonl")
 
 print("Loading model...")
 tokenizer = AutoTokenizer.from_pretrained(LORA_PATH)

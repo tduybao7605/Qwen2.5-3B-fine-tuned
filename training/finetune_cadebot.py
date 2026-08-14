@@ -3,9 +3,11 @@ Fine-tune Qwen2.5-3B-Instruct → Cadebot (LoRA fp16)
 Dataset: dataset/train.jsonl + val.jsonl
 Output : ./cadebot-lora/
 
-Run:
-    PYTHON_INCLUDE_DIR=/home/team3/python_headers/python3.12 \
-    /home/team3/Isaac-GR00T/.venv/bin/python finetune_cadebot.py
+Run (cần môi trường có CUDA — bản này train fp16 trên GPU):
+    python3 training/finetune_cadebot.py
+
+Nếu build extension cần header Python mà interpreter không kèm sẵn, đặt
+PYTHON_INCLUDE_DIR trỏ tới thư mục chứa Python.h trước khi chạy.
 """
 
 import json

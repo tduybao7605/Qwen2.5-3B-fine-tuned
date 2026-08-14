@@ -1,4 +1,6 @@
-FROM /home/team3/Qwen2.5-3B-fine-tuned/cadebot-viva.gguf
+# Build with: ollama create cadebot-viva -f Modelfile   (run from the repo root)
+# The GGUF is produced by training/merge_model.py followed by llama.cpp conversion.
+FROM ./cadebot-viva.gguf
 SYSTEM "Bạn là Cadebot, trợ lý robot phục vụ tại Viva Reserve Coffee. Hãy trả lời bằng JSON hợp lệ với các trường: intent, spokenText, và các trường phù hợp với intent."
 PARAMETER temperature 0.1
 PARAMETER num_ctx 2048
