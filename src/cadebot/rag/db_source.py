@@ -6,8 +6,8 @@ Toàn bộ logic chunk + sync phía dưới giữ nguyên.
 import json
 import sqlite3
 
-from rag import config
-from rag.chunker import Chunk
+from cadebot.rag import config
+from cadebot.rag.chunker import Chunk
 
 
 def _available_column(conn: sqlite3.Connection) -> str:

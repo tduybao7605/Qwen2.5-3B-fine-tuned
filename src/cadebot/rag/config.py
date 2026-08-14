@@ -2,7 +2,9 @@
 import os
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+# config.py nằm ở src/cadebot/rag/config.py -> parents[3] là gốc repo.
+# Cho override được để container (WORKDIR /app) và host cùng hiểu một gốc.
+REPO_ROOT = Path(os.getenv("CADEBOT_ROOT", Path(__file__).resolve().parents[3]))
 
 # ── Embedding (ĐÃ CHỐT — đổi = phải re-embed toàn bộ KB) ────────────────
 EMBEDDING_MODEL = "bge-m3"
@@ -39,6 +41,13 @@ MAX_CONTEXT_CHARS = 2000
 # ("best seller", "được yêu thích nhất") lấy từ trọng số fine-tune chứ không
 # có trong context. Modelfile của bản Ollama vốn đã để 0.1.
 GEN_TEMPERATURE = float(os.getenv("GEN_TEMPERATURE", "0.2"))
+
+# ── Model artifacts ────────────────────────────────────────────────────
+# Trọng số KHÔNG bake vào image Docker — mount lúc chạy, xem docker-compose.yml.
+# Đường dẫn lấy từ env để container và host cùng trỏ về một chỗ.
+MODEL_DIR = Path(os.getenv("CADEBOT_MODEL_DIR", REPO_ROOT / "cadebot-lora"))
+BASE_MODEL = os.getenv("CADEBOT_BASE_MODEL", "Qwen/Qwen2.5-3B-Instruct")
+STT_MODEL = os.getenv("CADEBOT_STT_MODEL", "vinai/PhoWhisper-large")
 
 # ── KB sources ─────────────────────────────────────────────────────────
 KB_DIR = REPO_ROOT / "knowledge_Base_cadebot"

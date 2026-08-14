@@ -12,7 +12,7 @@ from pathlib import Path
 import requests
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "src"))
 
 API = "http://localhost:8000"
 EVAL_FILE = ROOT / "eval" / "rag_queries.json"

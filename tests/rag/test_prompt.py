@@ -1,7 +1,7 @@
 import json
 
-from rag.prompt import build_context_block, fallback_response
-from rag.retriever import RetrievalResult, RetrievedChunk
+from cadebot.rag.prompt import build_context_block, fallback_response
+from cadebot.rag.retriever import RetrievalResult, RetrievedChunk
 
 
 def test_fallback_matches_android_json_schema():

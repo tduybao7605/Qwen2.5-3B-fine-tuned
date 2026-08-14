@@ -1,7 +1,7 @@
 """Client Dify Dataset API — ghi KB. Dùng Dataset API key (KHÔNG phải App API key)."""
 import requests
 
-from rag import config
+from cadebot.rag import config
 
 
 class DifyKnowledgeClient:

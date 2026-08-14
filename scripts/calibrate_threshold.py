@@ -6,10 +6,10 @@ import json
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from rag import config
-from rag.retriever import Retriever
+from cadebot.rag import config
+from cadebot.rag.retriever import Retriever
 
 EVAL_FILE = Path(__file__).resolve().parent.parent / "eval" / "rag_queries.json"
 

@@ -7,13 +7,13 @@ import argparse
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from rag import config
-from rag.chunker import chunk_all_markdown
-from rag.db_source import chunk_database
-from rag.dify_kb import DifyKnowledgeClient
-from rag.kb_builder import build_document
+from cadebot.rag import config
+from cadebot.rag.chunker import chunk_all_markdown
+from cadebot.rag.db_source import chunk_database
+from cadebot.rag.dify_kb import DifyKnowledgeClient
+from cadebot.rag.kb_builder import build_document
 
 
 def main() -> int:

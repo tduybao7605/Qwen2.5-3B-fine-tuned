@@ -1,6 +1,6 @@
 """Gộp chunk thành một document markdown để Dify cắt lại theo delimiter `---`."""
-from rag import config
-from rag.chunker import Chunk
+from cadebot.rag import config
+from cadebot.rag.chunker import Chunk
 
 
 def build_document(chunks: list[Chunk]) -> str:

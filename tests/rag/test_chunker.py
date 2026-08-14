@@ -1,5 +1,5 @@
-from rag import config
-from rag.chunker import Chunk, chunk_all_markdown, chunk_faq_file, chunk_markdown_file
+from cadebot.rag import config
+from cadebot.rag.chunker import Chunk, chunk_all_markdown, chunk_faq_file, chunk_markdown_file
 
 
 def test_chunk_render_prefixes_id():

@@ -1,5 +1,5 @@
 import pytest
-from rag import config
+from cadebot.rag import config
 
 
 def test_embedding_model_locked():

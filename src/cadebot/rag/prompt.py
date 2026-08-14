@@ -1,6 +1,6 @@
 """Dựng context block cho LLM và câu trả lời FALLBACK cố định."""
 import json
-from rag.retriever import RetrievalResult
+from cadebot.rag.retriever import RetrievalResult
 
 FALLBACK_TEXT = (
     "Xin lỗi bạn, mình chưa có thông tin chính xác về điều này. "

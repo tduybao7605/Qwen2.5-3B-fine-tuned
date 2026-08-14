@@ -1,6 +1,6 @@
-from rag import config
-from rag.chunker import Chunk
-from rag.kb_builder import build_document
+from cadebot.rag import config
+from cadebot.rag.chunker import Chunk
+from cadebot.rag.kb_builder import build_document
 
 
 def test_chunks_joined_by_separator():
@@ -28,8 +28,8 @@ def test_build_document_rejects_text_containing_separator():
 
 
 def test_real_kb_builds_without_separator_collision():
-    from rag.chunker import chunk_all_markdown
-    from rag.db_source import chunk_database
+    from cadebot.rag.chunker import chunk_all_markdown
+    from cadebot.rag.db_source import chunk_database
 
     doc = build_document(chunk_all_markdown() + chunk_database())
     assert len(doc) > 5000

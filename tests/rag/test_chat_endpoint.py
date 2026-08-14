@@ -10,7 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 import serve_model
-from rag.retriever import RetrievalResult, RetrievedChunk
+from cadebot.rag.retriever import RetrievalResult, RetrievedChunk
 
 
 class FakeRetriever:

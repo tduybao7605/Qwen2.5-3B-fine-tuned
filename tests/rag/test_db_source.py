@@ -1,6 +1,6 @@
 import json
 
-from rag.db_source import chunk_database, get_menu_data
+from cadebot.rag.db_source import chunk_database, get_menu_data
 
 
 def test_get_menu_data_returns_three_sections():
@@ -33,7 +33,7 @@ def test_attributes_json_is_flattened_into_readable_text():
 
 
 def test_db_chunk_ids_do_not_collide_with_markdown_chunk_ids():
-    from rag.chunker import chunk_all_markdown
+    from cadebot.rag.chunker import chunk_all_markdown
 
     all_ids = [c.id for c in chunk_database()] + [c.id for c in chunk_all_markdown()]
     assert len(all_ids) == len(set(all_ids))

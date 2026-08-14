@@ -1,7 +1,7 @@
 """Mức 2: lọc sourceIds model tự bịa ra."""
 import json
 
-from rag.prompt import sanitize_response
+from cadebot.rag.prompt import sanitize_response
 
 
 def test_drops_source_ids_not_in_context():

@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 
 import requests
 
-from rag import config
+from cadebot.rag import config
 
 
 @dataclass
