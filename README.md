@@ -277,6 +277,12 @@ with the Android TTS engine. Both calls go to the same Cadebot server — speech
 recognition runs on our own PhoWhisper-large, so there is no third-party service
 and no API key to obtain.
 
+A prebuilt debug APK is attached to the
+[v1.0.0 release](https://github.com/tduybao7605/Qwen2.5-3B-fine-tuned/releases/tag/v1.0.0).
+It is compiled with the default `http://10.0.2.2:8000`, which only works from an
+Android emulator running on the same machine as the server — **for a real device
+you must rebuild** with your own server address:
+
 ```bash
 cd Cadebot_UI
 cp local.properties.example local.properties
@@ -362,7 +368,7 @@ curl -s -X POST localhost:8000/chat \
 
 Note that `response` is a **string containing JSON** — clients parse it a second
 time. `sourceIds` is populated, and any ID the model invented has already been
-stripped. On CPU this call takes roughly 142 s.
+stripped. On CPU this call takes 142-184 s depending on machine load; see the latency table in docs/deployment.md.
 
 **4. An out-of-scope question — blocked before the model runs**
 
@@ -454,7 +460,8 @@ Fuller table, with causes: [docs/deployment.md](docs/deployment.md#troubleshooti
 
 ## Limitations
 
-- **~142 s per grounded answer** on the CPU-only deployment machine, and ~150 s
+- **142-184 s per grounded answer** on the CPU-only deployment machine (measured
+  twice, the spread is machine load), and ~150 s
   to transcribe 5 s of audio. The fix is INT4 quantization or a GPU, not more
   retrieval work.
 - **Grounding blocks fabricated numbers, not fabricated attributes.** Prices and

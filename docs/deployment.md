@@ -322,13 +322,28 @@ What it costs, and it is not a small thing here:
 
 ### The 100 s limit vs. grounded answers
 
-Measured on this CPU-only host:
+Measured on the CPU-only deployment host. Two runs are shown because generation
+time moves a lot with what else the machine is doing — treat these as a range,
+not a spec:
 
-| Request | Time | Through a Cloudflare Tunnel? |
-|---|---|---|
-| `/chat`, out of scope (grounded, hard-blocked) | **0.096 s** | Fine |
-| `/chat`, in scope, grounded (`use_rag: true`) | **~142 s** | **HTTP 524** |
-| `/chat`, ungrounded (`use_rag: false`) | **~95 s** | Squeaks through |
+| Request | 2026-07-29 | 2026-08-14 | Through a Cloudflare Tunnel? |
+|---|---|---|---|
+| `/retrieve` (no LLM) | — | **0.06 – 0.11 s** | Fine |
+| `/chat`, out of scope (grounded, hard-blocked) | **0.096 s** | **0.081 s** | Fine |
+| `/chat`, in scope, grounded (`use_rag: true`) | **~142 s** | **183.9 s** | **HTTP 524** |
+| `/chat`, ungrounded (`use_rag: false`) | **~95 s** | not re-measured | Squeaks through |
+
+> Conditions for the 2026-08-14 column: Intel CPU, no GPU, `cadebot-api` running
+> alongside the full 15-container Dify stack on the same machine, `max_new_tokens`
+> 400, `TOP_K` 3. The 2026-07-29 figures were taken during threshold calibration
+> on a less loaded machine. The gap between 142 s and 184 s is contention, not a
+> regression — but it means **any number here is a measurement, not a guarantee**.
+> Re-measure on the target hardware before making a hosting decision.
+
+The shape of the result is what matters and it is stable across both runs:
+retrieval is effectively free (~0.1 s), rejecting an out-of-scope question is
+effectively free because the LLM is never invoked, and **only the grounded
+generation path is slow** — comfortably past 100 s either way.
 
 `use_rag` defaults to **`true`** in `src/cadebot/api.py`, and that default is
 correct: with grounding off the model answers from fine-tuning memory, inventing
@@ -394,7 +409,7 @@ open — the Android client is not a browser.
 | Dify starts but `plugin_daemon` cannot resolve `db_postgres` | Started without the `postgresql` profile | `docker compose --profile postgresql --profile qdrant up -d` |
 | `/health` shows `rag_ready: false` | `DIFY_DATASET_API_KEY` / `DIFY_DATASET_ID` unset or wrong; the startup probe also logs a warning | Check `.env`, then `make restart` — `config.py` reads the environment at import time |
 | Dify returns 401 | The App API key was used instead of the Dataset API key | Knowledge → API Access → API Key → Create |
-| Client gets HTTP 524 | A grounded turn (~142 s) exceeded Cloudflare's 100 s edge limit | Have that client send `{"use_rag": false}` per request, reach the host off-tunnel, or move generation to a GPU — do **not** change the server default; see [above](#the-100-s-limit-vs-grounded-answers) |
+| Client gets HTTP 524 | A grounded turn (142–184 s measured) exceeded Cloudflare's 100 s edge limit | Have that client send `{"use_rag": false}` per request, reach the host off-tunnel, or move generation to a GPU — do **not** change the server default; see [above](#the-100-s-limit-vs-grounded-answers) |
 | First boot appears hung | Downloading ~6 GB of weights into `hf_cache` | `make logs`, wait for `✅ Chat model ready!` |
 | Ollama unreachable from Dify ("Connection refused" when registering the model) | Ollama listens on `127.0.0.1` only | Run `knowledge_base/ollama_docker_bridge.py`; see [rag-setup.md](rag-setup.md) §3 |
 | Retrieval returns segments with `chunk_id: "unknown"` | A segment lost its leading `[chunk_id]` line — usually a `---` inside a chunk, or `CHUNK_MAX_TOKENS` set too low | Re-run `scripts/sync_kb.py`; `kb_builder.build_document` raises on the offending chunk |

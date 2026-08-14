@@ -212,7 +212,7 @@ Only the last 8 history turns are forwarded to the model (`req.history[-8:]`).
 | Decision | Why | Source |
 |---|---|---|
 | Score threshold `0.51` | F1 0.968 / precision 0.938 / recall 1.000 over 30 calibration queries; the in-scope (min 0.526) and out-of-scope (max 0.540) distributions overlap by only 0.014 | `src/cadebot/rag/config.py`, [rag-setup.md](rag-setup.md) |
-| Hard-block out-of-scope **before** the LLM | 0.096 s instead of ~142 s, and it removes the fabrication path entirely instead of asking the model not to fabricate | `src/cadebot/api.py` |
+| Hard-block out-of-scope **before** the LLM | 0.08–0.10 s instead of 142–184 s, and it removes the fabrication path entirely instead of asking the model not to fabricate | `src/cadebot/api.py` |
 | Chunk IDs embedded as a `[id]` first line | Dify's retrieval API returns segment *text*, not our metadata — the ID has to survive inside the content itself or provenance is lost | `src/cadebot/rag/chunker.py`, `src/cadebot/rag/retriever.py` |
 | `max_tokens` 2000, not 500 | We already chunk ourselves, so Dify's limit is only a safety net; at 500 it re-split Vietnamese chunks and 34 markdown chunks became 46 segments, 13 of which lost their `[chunk_id]` line | `src/cadebot/rag/config.py` |
 | Markdown horizontal rules stripped from chunks | A `---` line inside a chunk collides with the `\n---\n` separator, shifting every later segment by one | `src/cadebot/rag/chunker.py`, `src/cadebot/rag/kb_builder.py` |
@@ -238,7 +238,7 @@ Two consequences worth stating out loud:
 
 ## Known limitations
 
-- **CPU latency.** A grounded answer takes roughly 142 s end to end on the
+- **CPU latency.** A grounded answer takes 142-184 s end to end on the
   deployment machine (no GPU). The fix is INT4 quantization or a GPU, not more
   retrieval work. See [performance.md](performance.md) for the measured
   breakdown and the Jetson Orin Nano projection. This also puts a grounded turn

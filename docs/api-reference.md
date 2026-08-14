@@ -100,7 +100,7 @@ The main endpoint. `application/json`.
 |---|---|---|---|
 | `message` | string | *required* | The user's turn |
 | `history` | array of `{role, content}` | `[]` | Prior turns. Only the **last 8** are sent to the model (`req.history[-8:]`) |
-| `use_rag` | bool | **`true`** | Ground the answer in the knowledge base and hard-block out-of-scope questions. Send `false` only if your deployment cannot tolerate a ~142 s grounded turn — the answer then comes from fine-tuning memory, unverified. See [deployment.md](deployment.md#the-100-s-limit-vs-grounded-answers) |
+| `use_rag` | bool | **`true`** | Ground the answer in the knowledge base and hard-block out-of-scope questions. Send `false` only if your deployment cannot tolerate a 142-184 s grounded turn — the answer then comes from fine-tuning memory, unverified. See [deployment.md](deployment.md#the-100-s-limit-vs-grounded-answers) |
 | `top_k` | int or null | `null` | Accepted for debugging but **not currently used** by this handler; retrieval uses `config.TOP_K` (3) |
 
 If `use_rag` is `false`, or the server started without Dify credentials
@@ -257,12 +257,12 @@ Measured on the deployment machine — CPU only, no GPU.
 | Path | Time | Source |
 |---|---|---|
 | `/chat` out of scope, grounded (default) | **0.096 s** — the LLM is never invoked | [rag-setup.md](rag-setup.md) |
-| `/chat` in scope, grounded (default) | **~142 s** (2 min 22 s) | [rag-setup.md](rag-setup.md) |
+| `/chat` in scope, grounded (default) | **142-184 s** (measured 2026-07-29 / 2026-08-14) | [deployment.md](deployment.md#the-100-s-limit-vs-grounded-answers) |
 | `/chat` with `use_rag: false` | **~95 s** | Measured 2026-08-04, when the default was briefly flipped |
 | `/chat` LLM generation alone, no context injection | ~78 s | [performance.md](performance.md) §3 |
 | `/stt`, 5 s of audio | ~150 s (~30× slower than real time) | [performance.md](performance.md) §3 |
 
-The gap between 78 s and 142 s is context injection: grounding makes the prompt
+The gap between 78 s and 142+ s is context injection: grounding makes the prompt
 longer, and prefill on CPU is not free. A grounded turn therefore does not fit
 inside the 100 s response limit of a Cloudflare-Tunnel-fronted deployment, which
 returns HTTP 524. That is handled per deployment — see
